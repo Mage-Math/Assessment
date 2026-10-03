@@ -31,6 +31,30 @@ body {
     padding: 35px;
     border-radius: 18px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    position: relative;
+}
+
+.top-bar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+}
+
+.teacher-btn {
+    background: transparent;
+    border: 2px solid var(--primary-color);
+    color: var(--primary-color);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    margin: 0;
+}
+
+.teacher-btn:hover {
+    background: var(--primary-color);
+    color: white;
 }
 
 .header-logo {
@@ -79,7 +103,7 @@ h1 {
     margin-bottom: 15px;
 }
 
-input[type="text"] {
+input[type="text"], input[type="password"] {
     width: 100%;
     padding: 13px;
     border: 2px solid #ccc;
@@ -89,7 +113,7 @@ input[type="text"] {
     transition: border-color 0.3s;
 }
 
-input[type="text"]:focus {
+input[type="text"]:focus, input[type="password"]:focus {
     border-color: var(--secondary-color);
     outline: none;
 }
@@ -109,10 +133,6 @@ button {
 
 button:hover {
     background: var(--accent-color);
-}
-
-button:active {
-    transform: scale(0.98);
 }
 
 .btn-secondary {
@@ -181,8 +201,7 @@ button:active {
     margin-top: 20px;
 }
 
-.topic-table th,
-.topic-table td {
+.topic-table th, .topic-table td {
     border: 1px solid #ddd;
     padding: 12px;
     text-align: center;
@@ -220,8 +239,11 @@ button:active {
 
 <!-- START SCREEN -->
 <div id="startScreen">
+    <div class="top-bar">
+        <button class="teacher-btn" onclick="openTeacherLogin()">🔑 Teacher Portal</button>
+    </div>
+
     <div class="header-logo">
-        <!-- MAGE Logo Emblem -->
         <svg class="logo-svg" viewBox="0 0 100 100">
             <circle cx="50" cy="50" r="45" fill="#0d3b66"/>
             <path d="M25 65 L50 25 L75 65 L60 65 L50 45 L40 65 Z" fill="#00a896"/>
@@ -290,206 +312,152 @@ button:active {
         </table>
 
         <br>
-        <button class="btn-secondary" onclick="downloadReport()">Download PDF/Text Report</button>
+        <button class="btn-secondary" onclick="downloadReport()">Download Report (.txt)</button>
         <p id="savingMessage"></p>
     </div>
+</div>
+
+<!-- TEACHER DASHBOARD SCREEN -->
+<div id="teacherScreen" class="hidden">
+    <div class="top-bar">
+        <button class="teacher-btn" onclick="exitTeacherPortal()">Exit Portal</button>
+    </div>
+    <h1>Teacher / Admin Dashboard</h1>
+    <p class="subtitle">Class Assessment Results & Roster Management</p>
+
+    <div style="margin-bottom: 20px; display: flex; gap: 10px;">
+        <button class="btn-secondary" onclick="exportClassCSV()">📥 Export All Results (CSV)</button>
+        <button onclick="clearClassData()" style="background:#c0392b;">Clear All Results</button>
+    </div>
+
+    <table class="topic-table">
+        <thead>
+            <tr>
+                <th>Student Name</th>
+                <th>Score</th>
+                <th>%</th>
+                <th>Placement</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody id="teacherTableBody"></tbody>
+    </table>
 </div>
 
 </div>
 
 <script>
-/* =====================================================
-   GOOGLE SHEETS API CONFIGURATION
-   ===================================================== */
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx7MAqukTjRKyzbzS4KiiiEbMCubFTYgOGZNmrTFFo8CD-CJtuLZv0qzJ9uGhDKQg/exec";
+const TEACHER_PIN = "1234"; // DEFAULT SECURITY PIN
 
-/* =====================================================
-   TEST CONFIGURATION & STATE
-   ===================================================== */
 const MIN_QUESTIONS = 25;
 const MAX_QUESTIONS = 35;
-const TIME_LIMIT_SECONDS = 45 * 60; // 45 Minutes
+const TIME_LIMIT_SECONDS = 45 * 60;
 
 let studentName = "";
 let currentQuestion = null;
 let currentQuestionIndex = 0;
-let currentDifficulty = 2; // Level 1 (Grade 7), 2 (Grade 8), 3 (Grade 9)
+let currentDifficulty = 2;
 let consecutiveCorrect = 0;
 let consecutiveIncorrect = 0;
-
 let score = 0;
 let usedQuestions = [];
 let topicStats = {};
 let timerInterval = null;
 let timeRemaining = TIME_LIMIT_SECONDS;
 
-/* =====================================================
-   ADVANCED QUESTION BANK (GRADE 7 TO GRADE 9)
-   Level 1: Grade 7 | Level 2: Grade 8 | Level 3: Grade 9
-   ===================================================== */
 const questions = [
-    /* --- ALGEBRA & EQUATIONS --- */
-    {
-        topic: "Algebra & Equations",
-        difficulty: 1,
-        skill: "Solving Multi-Step Linear Equations",
-        question: "Solve for x: 4(x - 3) = 2x + 10",
-        options: ["x = 11", "x = 7", "x = 5", "x = 13"],
-        answer: 0
-    },
-    {
-        topic: "Algebra & Equations",
-        difficulty: 2,
-        skill: "Solving Equations with Variables on Both Sides",
-        question: "Solve for y: 7y - 5 = 3(y + 9)",
-        options: ["y = 8", "y = 6", "y = 7", "y = 9"],
-        answer: 0
-    },
-    {
-        topic: "Algebra & Equations",
-        difficulty: 2,
-        skill: "Linear Inequalities",
-        question: "Solve the inequality: -3x + 7 < 22",
-        options: ["x > -5", "x < -5", "x > 5", "x < 5"],
-        answer: 0
-    },
-    {
-        topic: "Algebra & Equations",
-        difficulty: 3,
-        skill: "Literal Equations (Rearranging Formulae)",
-        question: "Make 'r' the subject of the formula: A = P(1 + rt)",
-        options: ["r = (A - P) / (Pt)", "r = (A + P) / Pt", "r = A / Pt - 1", "r = (A - 1) / Pt"],
-        answer: 0
-    },
-    {
-        topic: "Algebra & Equations",
-        difficulty: 3,
-        skill: "Systems of Linear Equations",
-        question: "Solve the system of equations:\n2x + 3y = 12\nx - y = 1",
-        options: ["x = 3, y = 2", "x = 2, y = 3", "x = 4, y = 1", "x = 5, y = 0"],
-        answer: 0
-    },
-    {
-        topic: "Algebra & Equations",
-        difficulty: 3,
-        skill: "Quadratic Factorisation",
-        question: "Factorise completely: x² - 7x + 12",
-        options: ["(x - 3)(x - 4)", "(x + 3)(x + 4)", "(x - 2)(x - 6)", "(x + 1)(x - 12)"],
-        answer: 0
-    },
-
-    /* --- FUNCTIONS & SEQUENCES --- */
-    {
-        topic: "Functions & Sequences",
-        difficulty: 1,
-        skill: "Arithmetic Sequences",
-        question: "Find the 15th term of the sequence: 5, 9, 13, 17, ...",
-        options: ["61", "57", "65", "53"],
-        answer: 0
-    },
-    {
-        topic: "Functions & Sequences",
-        difficulty: 2,
-        skill: "Non-Linear & Quadratic Sequences",
-        question: "What is the nth term expression for the sequence: 3, 8, 15, 24, 35...?",
-        options: ["n² + 2n", "n² + 2", "2n² + 1", "3n + 0"],
-        answer: 0
-    },
-    {
-        topic: "Functions & Sequences",
-        difficulty: 3,
-        skill: "Functions & Evaluation",
-        question: "If f(x) = 3x² - 2x + 5, calculate f(-2).",
-        options: ["21", "13", "17", "9"],
-        answer: 0
-    },
-
-    /* --- GEOMETRY & PYTHAGORAS --- */
-    {
-        topic: "Geometry & Trigonometry",
-        difficulty: 1,
-        skill: "Angle Properties of Polygons",
-        question: "Calculate the interior angle sum of a regular hexagon (6 sides).",
-        options: ["720°", "540°", "360°", "900°"],
-        answer: 0
-    },
-    {
-        topic: "Geometry & Trigonometry",
-        difficulty: 2,
-        skill: "Pythagoras Theorem",
-        question: "A right-angled triangle has legs of length 9 cm and 12 cm. Find the hypotenuse.",
-        options: ["15 cm", "18 cm", "21 cm", "13 cm"],
-        answer: 0
-    },
-    {
-        topic: "Geometry & Trigonometry",
-        difficulty: 3,
-        skill: "Right-Angled Trigonometry (SOH CAH TOA)",
-        question: "In a right triangle, the side opposite angle θ is 8 cm, and the hypotenuse is 10 cm. What is sin(θ)?",
-        options: ["0.8", "0.6", "1.25", "0.75"],
-        answer: 0
-    },
-    {
-        topic: "Geometry & Trigonometry",
-        difficulty: 3,
-        skill: "Volume & Surface Area of 3D Shapes",
-        question: "A cylinder has radius 3 cm and height 10 cm. Find its volume in terms of π.",
-        options: ["90π cm³", "60π cm³", "30π cm³", "180π cm³"],
-        answer: 0
-    },
-
-    /* --- NUMERACY & RATIO --- */
-    {
-        topic: "Numeracy & Proportionality",
-        difficulty: 1,
-        skill: "Percentage Increase/Decrease",
-        question: "An item originally costing $150 is increased by 20%. What is the new price?",
-        options: ["$180", "$170", "$190", "$160"],
-        answer: 0
-    },
-    {
-        topic: "Numeracy & Proportionality",
-        difficulty: 2,
-        skill: "Compound Interest",
-        question: "Calculate the total value of $1,000 invested at 5% compound interest per annum for 2 years.",
-        options: ["$1,102.50", "$1,100.00", "$1,050.00", "$1,125.00"],
-        answer: 0
-    },
-    {
-        topic: "Numeracy & Proportionality",
-        difficulty: 3,
-        skill: "Inverse Proportion",
-        question: "It takes 6 workers 8 hours to build a wall. How long will it take 4 workers operating at the same rate?",
-        options: ["12 hours", "10 hours", "14 hours", "9 hours"],
-        answer: 0
-    }
+    { topic: "Algebra & Equations", difficulty: 1, skill: "Solving Multi-Step Linear Equations", question: "Solve for x: 4(x - 3) = 2x + 10", options: ["x = 11", "x = 7", "x = 5", "x = 13"], answer: 0 },
+    { topic: "Algebra & Equations", difficulty: 2, skill: "Solving Equations with Variables on Both Sides", question: "Solve for y: 7y - 5 = 3(y + 9)", options: ["y = 8", "y = 6", "y = 7", "y = 9"], answer: 0 },
+    { topic: "Algebra & Equations", difficulty: 3, skill: "Literal Equations", question: "Make 'r' the subject of the formula: A = P(1 + rt)", options: ["r = (A - P) / (Pt)", "r = (A + P) / Pt", "r = A / Pt - 1", "r = (A - 1) / Pt"], answer: 0 },
+    { topic: "Algebra & Equations", difficulty: 3, skill: "Systems of Linear Equations", question: "Solve the system:\n2x + 3y = 12\nx - y = 1", options: ["x = 3, y = 2", "x = 2, y = 3", "x = 4, y = 1", "x = 5, y = 0"], answer: 0 },
+    { topic: "Functions & Sequences", difficulty: 1, skill: "Arithmetic Sequences", question: "Find the 15th term: 5, 9, 13, 17, ...", options: ["61", "57", "65", "53"], answer: 0 },
+    { topic: "Functions & Sequences", difficulty: 2, skill: "Non-Linear Sequences", question: "Find the nth term for: 3, 8, 15, 24, 35...", options: ["n² + 2n", "n² + 2", "2n² + 1", "3n + 0"], answer: 0 },
+    { topic: "Geometry & Trigonometry", difficulty: 2, skill: "Pythagoras Theorem", question: "Right triangle with legs 9 cm and 12 cm. Find hypotenuse.", options: ["15 cm", "18 cm", "21 cm", "13 cm"], answer: 0 },
+    { topic: "Numeracy & Proportionality", difficulty: 3, skill: "Inverse Proportion", question: "6 workers take 8 hours to build a wall. How long for 4 workers?", options: ["12 hours", "10 hours", "14 hours", "9 hours"], answer: 0 }
 ];
 
-/* Duplicate/Expand pool dynamically to ensure sufficient items for adaptive engine */
-function generateExpandedQuestions() {
+function generatePool() {
     let pool = [...questions];
     questions.forEach(q => {
-        let clone = JSON.parse(JSON.stringify(q));
-        clone.question += " (Alternative Variant)";
-        pool.push(clone);
+        let c = JSON.parse(JSON.stringify(q));
+        c.question += " (Variant)";
+        pool.push(c);
     });
     return pool;
 }
-const fullQuestionPool = generateExpandedQuestions();
+const fullQuestionPool = generatePool();
 
-/* =====================================================
-   INITIALIZATION & TIMER
-   ===================================================== */
+/* ================= TEACHER PORTAL & SECURITY PIN ================= */
+function openTeacherLogin() {
+    let pin = prompt("Enter Security PIN to access Teacher Dashboard:");
+    if (pin === TEACHER_PIN) {
+        document.getElementById("startScreen").classList.add("hidden");
+        document.getElementById("teacherScreen").classList.remove("hidden");
+        loadTeacherDashboard();
+    } else if (pin !== null) {
+        alert("Incorrect PIN. Access Denied.");
+    }
+}
+
+function exitTeacherPortal() {
+    document.getElementById("teacherScreen").classList.add("hidden");
+    document.getElementById("startScreen").classList.remove("hidden");
+}
+
+function loadTeacherDashboard() {
+    let records = JSON.parse(localStorage.getItem("mage_diagnostic_results") || "[]");
+    let tbody = document.getElementById("teacherTableBody");
+    tbody.innerHTML = "";
+
+    if (records.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5">No student submissions recorded yet.</td></tr>`;
+        return;
+    }
+
+    records.forEach(r => {
+        tbody.innerHTML += `
+            <tr>
+                <td><b>${r.name}</b></td>
+                <td>${r.score} / ${r.total}</td>
+                <td>${r.percentage}%</td>
+                <td>${r.placement}</td>
+                <td>${r.date}</td>
+            </tr>
+        `;
+    });
+}
+
+function exportClassCSV() {
+    let records = JSON.parse(localStorage.getItem("mage_diagnostic_results") || "[]");
+    if (records.length === 0) {
+        alert("No results available to export.");
+        return;
+    }
+
+    let csv = "Student Name,Score,Total,Percentage,Placement,Date\n";
+    records.forEach(r => {
+        csv += `"${r.name}",${r.score},${r.total},${r.percentage}%,"${r.placement}","${r.date}"\n`;
+    });
+
+    let blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    let link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "MAGE_Class_Results.csv";
+    link.click();
+}
+
+function clearClassData() {
+    if (confirm("Are you sure you want to delete all saved student results?")) {
+        localStorage.removeItem("mage_diagnostic_results");
+        loadTeacherDashboard();
+    }
+}
+
+/* ================= TEST LOGIC ================= */
 function initializeTopics() {
     topicStats = {};
-    const topics = [
-        "Algebra & Equations",
-        "Functions & Sequences",
-        "Geometry & Trigonometry",
-        "Numeracy & Proportionality"
-    ];
-
-    topics.forEach(t => {
+    ["Algebra & Equations", "Functions & Sequences", "Geometry & Trigonometry", "Numeracy & Proportionality"].forEach(t => {
         topicStats[t] = { attempted: 0, correct: 0, skillsMastered: new Set(), skillsLacking: new Set() };
     });
 }
@@ -499,30 +467,23 @@ function startTimer() {
         timeRemaining--;
         let mins = Math.floor(timeRemaining / 60);
         let secs = timeRemaining % 60;
-        document.getElementById("timeDisplay").textContent = 
-            `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-
+        document.getElementById("timeDisplay").textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         if (timeRemaining <= 0) {
             clearInterval(timerInterval);
-            alert("Time has expired! Submitting your assessment.");
             finishTest();
         }
     }, 1000);
 }
 
-/* =====================================================
-   TEST EXECUTION ENGINE
-   ===================================================== */
 function startTest() {
     studentName = document.getElementById("studentName").value.trim();
     if (!studentName) {
         alert("Please enter student name.");
         return;
     }
-
     initializeTopics();
     currentQuestionIndex = 0;
-    currentDifficulty = 2; // Start at Grade 8 Baseline
+    currentDifficulty = 2;
     consecutiveCorrect = 0;
     consecutiveIncorrect = 0;
     score = 0;
@@ -530,7 +491,6 @@ function startTest() {
 
     document.getElementById("startScreen").classList.add("hidden");
     document.getElementById("testScreen").classList.remove("hidden");
-
     startTimer();
     showNextQuestion();
 }
@@ -538,62 +498,40 @@ function startTest() {
 function chooseAdaptiveQuestion() {
     const available = fullQuestionPool.filter(q => !usedQuestions.includes(q));
     if (available.length === 0) return null;
-
-    // Filter by matching target difficulty
     let candidates = available.filter(q => q.difficulty === currentDifficulty);
-    
-    // Fallback if target difficulty pool depleted
-    if (candidates.length === 0) {
-        candidates = available;
-    }
-
-    // Sort by topics least tested to balance assessment
+    if (candidates.length === 0) candidates = available;
     candidates.sort((a, b) => topicStats[a.topic].attempted - topicStats[b.topic].attempted);
-
     return candidates[0];
 }
 
 function showNextQuestion() {
-    // Check stop criteria: Between 25 and 35 questions
     if (currentQuestionIndex >= MAX_QUESTIONS) {
         finishTest();
         return;
     }
-
     currentQuestion = chooseAdaptiveQuestion();
     if (!currentQuestion) {
         finishTest();
         return;
     }
-
     usedQuestions.push(currentQuestion);
-
-    document.getElementById("questionNumber").textContent = 
-        `${currentQuestionIndex + 1} of max ${MAX_QUESTIONS}`;
+    document.getElementById("questionNumber").textContent = `${currentQuestionIndex + 1} of max ${MAX_QUESTIONS}`;
 
     let html = `<div class="question">${currentQuestion.question}</div>`;
-
-    // Shuffle options dynamically
     let opts = currentQuestion.options.map((opt, idx) => ({ text: opt, isCorrect: idx === currentQuestion.answer }));
     opts.sort(() => Math.random() - 0.5);
     currentQuestion.currentShuffledOpts = opts;
 
     opts.forEach((opt, index) => {
-        html += `
-            <label class="option">
-                <input type="radio" name="answer" value="${index}">
-                ${opt.text}
-            </label>
-        `;
+        html += `<label class="option"><input type="radio" name="answer" value="${index}"> ${opt.text}</label>`;
     });
-
     document.getElementById("questionArea").innerHTML = html;
 }
 
 function submitAnswer() {
     const selected = document.querySelector('input[name="answer"]:checked');
     if (!selected) {
-        alert("Please select an answer to proceed.");
+        alert("Please select an answer.");
         return;
     }
 
@@ -603,35 +541,27 @@ function submitAnswer() {
 
     topicStats[topic].attempted++;
 
-    /* --- ADAPTIVE LEVEL SWITCHING LOGIC --- */
     if (isCorrect) {
         score++;
         topicStats[topic].correct++;
         topicStats[topic].skillsMastered.add(currentQuestion.skill);
-
         consecutiveCorrect++;
         consecutiveIncorrect = 0;
-
-        // CRITERIA 1: 2 consecutive correct answers at Grade 8 moves immediately to Grade 9
         if (consecutiveCorrect >= 2) {
             currentDifficulty = Math.min(3, currentDifficulty + 1);
-            consecutiveCorrect = 0; // Reset streak
+            consecutiveCorrect = 0;
         }
     } else {
         topicStats[topic].skillsLacking.add(currentQuestion.skill);
         consecutiveIncorrect++;
         consecutiveCorrect = 0;
-
-        // 2 consecutive wrong answers drops difficulty
         if (consecutiveIncorrect >= 2) {
             currentDifficulty = Math.max(1, currentDifficulty - 1);
-            consecutiveIncorrect = 0; // Reset streak
+            consecutiveIncorrect = 0;
         }
     }
 
     currentQuestionIndex++;
-
-    // Early termination if student completes >= 25 questions and level is clear
     if (currentQuestionIndex >= MIN_QUESTIONS && (currentDifficulty === 3 || currentDifficulty === 1)) {
         finishTest();
     } else {
@@ -639,139 +569,74 @@ function submitAnswer() {
     }
 }
 
-/* =====================================================
-   REPORT & RESULT GENERATION
-   ===================================================== */
 function finishTest() {
     clearInterval(timerInterval);
-
     document.getElementById("testScreen").classList.add("hidden");
     document.getElementById("resultScreen").classList.remove("hidden");
 
     let totalAttempted = currentQuestionIndex;
     let percentage = Math.round((score / totalAttempted) * 100);
-
     let targetGrade = "";
     let interpretationText = "";
 
-    /* Determine Final Placement Class */
     if (currentDifficulty === 3 && percentage >= 70) {
-        targetGrade = "Grade 9 (Advanced / Extended)";
-        interpretationText = "Exhibits exceptional mathematical mastery. Recommended for Grade 9 placement with focus on Systems of Equations, Trigonometry, and Complex Functions.";
+        targetGrade = "Grade 9 (Advanced)";
+        interpretationText = "Exhibits exceptional mathematical mastery. Ready for Grade 9 Systems of Equations and Trigonometry.";
     } else if (currentDifficulty >= 2 && percentage >= 55) {
         targetGrade = "Grade 8 (Standard Track)";
-        interpretationText = "Demonstrates solid understanding of middle-school algebra and geometry. Ready for standard Grade 8 progression.";
+        interpretationText = "Solid understanding of middle school algebra. Ready for Grade 8 standard curriculum.";
     } else {
-        targetGrade = "Grade 7 (Foundational Support Track)";
-        interpretationText = "Requires reinforcement in multi-step linear equations, foundational proportional reasoning, and basic geometric properties before advancing.";
+        targetGrade = "Grade 7 (Support Track)";
+        interpretationText = "Needs strengthening in core linear algebra and basic geometric concepts.";
     }
 
-    document.getElementById("gradeBadge").textContent = `Recommended Class: ${targetGrade}`;
+    document.getElementById("gradeBadge").textContent = `Placement: ${targetGrade}`;
     document.getElementById("placement").textContent = targetGrade;
     document.getElementById("finalScore").textContent = `Score: ${score} / ${totalAttempted} (${percentage}%)`;
     document.getElementById("interpretation").textContent = interpretationText;
 
-    /* Compile Skills */
-    let possessedHTML = "";
-    let lackingHTML = "";
-    let allMastered = [];
-    let allLacking = [];
-
+    let possessedHTML = "", lackingHTML = "";
     Object.keys(topicStats).forEach(t => {
-        topicStats[t].skillsMastered.forEach(s => allMastered.push(s));
-        topicStats[t].skillsLacking.forEach(s => allLacking.push(s));
+        topicStats[t].skillsMastered.forEach(s => possessedHTML += `<li>${s}</li>`);
+        topicStats[t].skillsLacking.forEach(s => lackingHTML += `<li>${s}</li>`);
     });
 
-    if (allMastered.length === 0) allMastered.push("Basic Assessment Items");
-    if (allLacking.length === 0) allLacking.push("None Identified during assessment");
-
-    allMastered.forEach(s => possessedHTML += `<li>${s}</li>`);
-    allLacking.forEach(s => lackingHTML += `<li>${s}</li>`);
-
-    document.getElementById("possessedSkills").innerHTML = possessedHTML;
-    document.getElementById("lackingSkills").innerHTML = lackingHTML;
+    document.getElementById("possessedSkills").innerHTML = possessedHTML || "<li>Basic math concepts</li>";
+    document.getElementById("lackingSkills").innerHTML = lackingHTML || "<li>None identified</li>";
 
     displayTopicResults();
-    sendToGoogleSheets(percentage, targetGrade);
+
+    // Save locally for Teacher Dashboard
+    let existing = JSON.parse(localStorage.getItem("mage_diagnostic_results") || "[]");
+    existing.push({
+        name: studentName,
+        score: score,
+        total: totalAttempted,
+        percentage: percentage,
+        placement: targetGrade,
+        date: new Date().toLocaleDateString()
+    });
+    localStorage.setItem("mage_diagnostic_results", JSON.stringify(existing));
 }
 
 function displayTopicResults() {
     const table = document.getElementById("topicResults");
     table.innerHTML = "";
-
     Object.keys(topicStats).forEach(topic => {
         const attempted = topicStats[topic].attempted;
         const correct = topicStats[topic].correct;
         let perf = attempted > 0 ? Math.round((correct / attempted) * 100) + "%" : "N/A";
-
-        table.innerHTML += `
-            <tr>
-                <td>${topic}</td>
-                <td>${correct}</td>
-                <td>${attempted}</td>
-                <td>${perf}</td>
-            </tr>
-        `;
+        table.innerHTML += `<tr><td>${topic}</td><td>${correct}</td><td>${attempted}</td><td>${perf}</td></tr>`;
     });
 }
 
-/* =====================================================
-   DOWNLOAD REPORT (CRITERION 8)
-   ===================================================== */
 function downloadReport() {
-    let reportContent = `MAGE MATHEMATICS DIAGNOSTIC REPORT\n`;
-    reportContent += `====================================\n`;
-    reportContent += `Student Name: ${studentName}\n`;
-    reportContent += `Date: ${new Date().toLocaleDateString()}\n`;
-    reportContent += `Recommended Class Placement: ${document.getElementById("placement").textContent}\n`;
-    reportContent += `Assessment Score: ${document.getElementById("finalScore").textContent}\n\n`;
-    reportContent += `INTERPRETATION:\n${document.getElementById("interpretation").textContent}\n\n`;
-
-    reportContent += `SKILLS POSSESSED:\n`;
-    document.querySelectorAll("#possessedSkills li").forEach(li => {
-        reportContent += `- ${li.textContent}\n`;
-    });
-
-    reportContent += `\nSKILLS NEEDING IMPROVEMENT:\n`;
-    document.querySelectorAll("#lackingSkills li").forEach(li => {
-        reportContent += `- ${li.textContent}\n`;
-    });
-
-    const blob = new Blob([reportContent], { type: "text/plain;charset=utf-8" });
-    const link = document.createElement("a");
+    let report = `MAGE MATHEMATICS DIAGNOSTIC REPORT\nName: ${studentName}\nPlacement: ${document.getElementById("placement").textContent}\nScore: ${document.getElementById("finalScore").textContent}\n`;
+    let blob = new Blob([report], { type: "text/plain;charset=utf-8" });
+    let link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `${studentName.replace(/\s+/g, '_')}_MAGE_Math_Report.txt`;
+    link.download = `${studentName}_Report.txt`;
     link.click();
-}
-
-/* =====================================================
-   GOOGLE SHEETS SYNC
-   ===================================================== */
-function sendToGoogleSheets(percentage, placement) {
-    document.getElementById("savingMessage").textContent = "Saving result to server...";
-
-    const data = {
-        name: studentName,
-        score: score,
-        total: currentQuestionIndex,
-        percentage: percentage,
-        placement: placement,
-        topics: topicStats,
-        date: new Date().toLocaleString()
-    };
-
-    fetch(GOOGLE_SCRIPT_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(data)
-    })
-    .then(() => {
-        document.getElementById("savingMessage").textContent = "Your result has been registered successfully.";
-    })
-    .catch(() => {
-        document.getElementById("savingMessage").textContent = "Diagnostic stored locally.";
-    });
 }
 </script>
 
