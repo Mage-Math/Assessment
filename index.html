@@ -25,7 +25,7 @@ body {
 }
 
 .container {
-    max-width: 900px;
+    max-width: 950px;
     margin: 20px auto;
     background: var(--card-bg);
     padding: 35px;
@@ -162,6 +162,12 @@ button:hover {
     background: #15803d;
 }
 
+.btn-small {
+    padding: 6px 12px;
+    font-size: 13px;
+    margin-top: 0;
+}
+
 .option {
     display: block;
     padding: 14px 18px;
@@ -223,8 +229,9 @@ button:hover {
 
 .topic-table th, .topic-table td {
     border: 1px solid #ddd;
-    padding: 12px;
+    padding: 10px;
     text-align: center;
+    font-size: 14px;
 }
 
 .topic-table th {
@@ -249,6 +256,64 @@ button:hover {
 .small {
     font-size: 14px;
     color: #666;
+}
+
+/* Modal for detailed answers view */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    max-width: 800px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.close-btn {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 22px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #888;
+}
+
+.close-btn:hover {
+    color: #000;
+}
+
+.status-correct {
+    color: #16a34a;
+    font-weight: bold;
+}
+
+.status-incorrect {
+    color: #dc2626;
+    font-weight: bold;
+}
+
+.detail-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
+    background: #f9fafb;
+    text-align: left;
 }
 </style>
 </head>
@@ -332,7 +397,7 @@ button:hover {
     <p class="subtitle">Class Assessment Results & Roster Management</p>
 
     <div style="margin-bottom: 20px; display: flex; gap: 10px;">
-        <button class="btn-secondary" onclick="exportClassCSV()">📥 Export All Results (CSV)</button>
+        <button class="btn-secondary" onclick="exportClassCSV()">📥 Export Detailed Results (CSV)</button>
         <button onclick="clearClassData()" style="background:#c0392b;">Clear All Results</button>
     </div>
 
@@ -344,10 +409,22 @@ button:hover {
                 <th>%</th>
                 <th>Placement</th>
                 <th>Date</th>
+                <th>Action</th>
             </tr>
         </thead>
         <tbody id="teacherTableBody"></tbody>
     </table>
+</div>
+
+<!-- STUDENT DETAILS MODAL -->
+<div id="detailModal" class="modal hidden">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <h2 id="modalStudentName" style="color: var(--primary-color); margin-top:0;"></h2>
+        <p id="modalMeta" style="font-weight:bold;"></p>
+        <hr>
+        <div id="modalDetailsArea"></div>
+    </div>
 </div>
 
 </div>
@@ -365,11 +442,12 @@ let score = 0;
 
 let masterSkills = new Set();
 let lackingSkills = new Set();
+let studentAnswersList = [];
 
 let timerInterval = null;
 let timeRemaining = TIME_LIMIT_SECONDS;
 
-/* QUESTION BANK IN FRIENDLY TEACHER TONE (INCLUDES COORDINATE GEOMETRY & WORD PROBLEMS) */
+/* QUESTION BANK IN FRIENDLY TEACHER TONE */
 const questions = [
     { skill: "Solving Multi-Step Linear Equations", question: "Can you solve this equation for x?\n4(x - 3) = 2x + 10", options: ["x = 11", "x = 7", "x = 5", "x = 13"], answer: 0 },
     { skill: "Solving Equations with Variables on Both Sides", question: "Find the value of y that makes this equation true:\n7y - 5 = 3(y + 9)", options: ["y = 8", "y = 6", "y = 7", "y = 9"], answer: 0 },
@@ -424,11 +502,11 @@ function loadTeacherDashboard() {
     tbody.innerHTML = "";
 
     if (records.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5">No student submissions recorded yet.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6">No student submissions recorded yet.</td></tr>`;
         return;
     }
 
-    records.forEach(r => {
+    records.forEach((r, index) => {
         tbody.innerHTML += `
             <tr>
                 <td><b>${r.name}</b></td>
@@ -436,9 +514,48 @@ function loadTeacherDashboard() {
                 <td>${r.percentage}%</td>
                 <td>${r.placement}</td>
                 <td>${r.date}</td>
+                <td><button class="btn-small btn-secondary" onclick="viewStudentDetails(${index})">View Breakdown</button></td>
             </tr>
         `;
     });
+}
+
+function viewStudentDetails(index) {
+    let records = JSON.parse(localStorage.getItem("mage_diagnostic_results") || "[]");
+    let student = records[index];
+    if (!student) return;
+
+    document.getElementById("modalStudentName").textContent = student.name;
+    document.getElementById("modalMeta").textContent = `Score: ${student.score}/${student.total} (${student.percentage}%) | Placement: ${student.placement} | Date: ${student.date}`;
+
+    let html = "";
+    if (student.details && student.details.length > 0) {
+        student.details.forEach((item, i) => {
+            let statusClass = item.isCorrect ? "status-correct" : "status-incorrect";
+            let statusText = item.isCorrect ? "✓ Correct" : "✗ Incorrect";
+
+            html += `
+                <div class="detail-card">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                        <b>Q${i + 1}: ${item.skill}</b>
+                        <span class="${statusClass}">${statusText}</span>
+                    </div>
+                    <div style="font-size:14px; color:#444; margin-bottom:8px;">${item.question}</div>
+                    <div style="font-size:13px;"><b>Selected Answer:</b> ${item.selectedAnswer}</div>
+                    <div style="font-size:13px;"><b>Correct Answer:</b> ${item.correctAnswer}</div>
+                </div>
+            `;
+        });
+    } else {
+        html = "<p>No detailed item analysis available for this entry.</p>";
+    }
+
+    document.getElementById("modalDetailsArea").innerHTML = html;
+    document.getElementById("detailModal").classList.remove("hidden");
+}
+
+function closeModal() {
+    document.getElementById("detailModal").classList.add("hidden");
 }
 
 function exportClassCSV() {
@@ -448,15 +565,22 @@ function exportClassCSV() {
         return;
     }
 
-    let csv = "Student Name,Score,Total,Percentage,Placement,Date\n";
+    let csv = "Student Name,Score,Total,Percentage,Placement,Date,Question Number,Skill,Question Text,Student Answer,Correct Answer,Status\n";
     records.forEach(r => {
-        csv += `"${r.name}",${r.score},${r.total},${r.percentage}%,"${r.placement}","${r.date}"\n`;
+        if (r.details && r.details.length > 0) {
+            r.details.forEach((d, idx) => {
+                let status = d.isCorrect ? "Correct" : "Incorrect";
+                csv += `"${r.name.replace(/"/g, '""')}",${r.score},${r.total},${r.percentage}%,"${r.placement}","${r.date}",${idx + 1},"${d.skill.replace(/"/g, '""')}","${d.question.replace(/"/g, '""')}","${d.selectedAnswer.replace(/"/g, '""')}","${d.correctAnswer.replace(/"/g, '""')}","${status}"\n`;
+            });
+        } else {
+            csv += `"${r.name.replace(/"/g, '""')}",${r.score},${r.total},${r.percentage}%,"${r.placement}","${r.date}",N/A,N/A,N/A,N/A,N/A,N/A\n`;
+        }
     });
 
     let blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     let link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = "MAGE_Class_Results.csv";
+    link.download = "MAGE_Detailed_Class_Results.csv";
     link.click();
 }
 
@@ -493,6 +617,7 @@ function startTest() {
     score = 0;
     masterSkills.clear();
     lackingSkills.clear();
+    studentAnswersList = [];
 
     document.getElementById("startScreen").classList.add("hidden");
     document.getElementById("testScreen").classList.remove("hidden");
@@ -531,7 +656,18 @@ function submitAnswer() {
     }
 
     const selectedIndex = Number(selected.value);
-    const isCorrect = currentQuestion.shuffledOpts[selectedIndex].isCorrect;
+    const chosenOpt = currentQuestion.shuffledOpts[selectedIndex];
+    const isCorrect = chosenOpt.isCorrect;
+    const correctAnswerText = currentQuestion.options[currentQuestion.answer];
+
+    // Log response detail
+    studentAnswersList.push({
+        question: currentQuestion.question,
+        skill: currentQuestion.skill,
+        selectedAnswer: chosenOpt.text,
+        correctAnswer: correctAnswerText,
+        isCorrect: isCorrect
+    });
 
     if (isCorrect) {
         score++;
@@ -585,7 +721,8 @@ function finishTest() {
         total: totalQuestions,
         percentage: percentage,
         placement: targetGrade,
-        date: new Date().toLocaleDateString()
+        date: new Date().toLocaleDateString(),
+        details: studentAnswersList
     });
     localStorage.setItem("mage_diagnostic_results", JSON.stringify(existing));
 
@@ -609,7 +746,8 @@ function sendToGoogleSheets(percentage, placement, total) {
         total: total,
         percentage: percentage,
         placement: placement,
-        date: new Date().toLocaleString()
+        date: new Date().toLocaleString(),
+        details: studentAnswersList
     };
 
     fetch(GOOGLE_SCRIPT_URL, {
