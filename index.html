@@ -238,7 +238,7 @@ button:hover {
     color: #666;
 }
 
-/* Modal Styling - Default display is NONE */
+/* Modal Styling */
 .modal {
     display: none;
     position: fixed;
@@ -299,6 +299,17 @@ button:hover {
     background: #f9fafb;
     text-align: left;
 }
+
+.warning-banner {
+    background: #fef2f2;
+    border: 1px solid #fca5a5;
+    color: #991b1b;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-weight: bold;
+    font-size: 14px;
+}
 </style>
 </head>
 
@@ -341,12 +352,16 @@ button:hover {
         <div class="timer-box">Time Left: <span id="timeDisplay">45:00</span></div>
     </div>
 
+    <div id="tabWarning" class="warning-banner hidden">
+        ⚠️ Warning: Tab switching detected! Count: <span id="switchCountDisplay">0</span>
+    </div>
+
     <div id="questionArea"></div>
 
     <button onclick="submitAnswer()">Submit Answer</button>
 </div>
 
-<!-- RESULT SCREEN - SIMPLIFIED FOR STUDENTS -->
+<!-- RESULT SCREEN -->
 <div id="resultScreen" class="hidden">
     <div class="result">
         <h1>Assessment Submitted</h1>
@@ -382,6 +397,7 @@ button:hover {
                 <th>Score</th>
                 <th>%</th>
                 <th>Placement</th>
+                <th>Tab Switches</th>
                 <th>Date</th>
                 <th>Action</th>
             </tr>
@@ -392,7 +408,7 @@ button:hover {
 
 </div>
 
-<!-- STUDENT DETAILS MODAL FOR TEACHER USE ONLY -->
+<!-- STUDENT DETAILS MODAL -->
 <div id="detailModal" class="modal" style="display: none;">
     <div class="modal-content">
         <span class="close-btn" onclick="closeModal()">&times;</span>
@@ -420,6 +436,21 @@ let studentAnswersList = [];
 
 let timerInterval = null;
 let timeRemaining = TIME_LIMIT_SECONDS;
+
+// TAB SWITCH TRACKING
+let tabSwitchCount = 0;
+let isTestActive = false;
+
+document.addEventListener("visibilitychange", handleTabSwitch);
+
+function handleTabSwitch() {
+    if (document.hidden && isTestActive) {
+        tabSwitchCount++;
+        document.getElementById("tabWarning").classList.remove("hidden");
+        document.getElementById("switchCountDisplay").textContent = tabSwitchCount;
+        alert(`Warning: You switched tabs or minimized the window! Tab switch count: ${tabSwitchCount}. This activity is logged.`);
+    }
+}
 
 /* QUESTION BANK */
 const questions = [
@@ -477,17 +508,19 @@ function loadTeacherDashboard() {
     tbody.innerHTML = "";
 
     if (records.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6">No student submissions recorded yet.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7">No student submissions recorded yet.</td></tr>`;
         return;
     }
 
     records.forEach((r, index) => {
+        let switchBadge = r.tabSwitches > 0 ? `<span style="color:red; font-weight:bold;">${r.tabSwitches}</span>` : "0";
         tbody.innerHTML += `
             <tr>
                 <td><b>${r.name}</b></td>
                 <td>${r.score} / ${r.total}</td>
                 <td>${r.percentage}%</td>
                 <td>${r.placement}</td>
+                <td>${switchBadge}</td>
                 <td>${r.date}</td>
                 <td><button class="btn-small btn-secondary" onclick="viewStudentDetails(${index})">View Breakdown</button></td>
             </tr>
@@ -501,7 +534,7 @@ function viewStudentDetails(index) {
     if (!student) return;
 
     document.getElementById("modalStudentName").textContent = student.name;
-    document.getElementById("modalMeta").textContent = `Score: ${student.score}/${student.total} (${student.percentage}%) | Placement: ${student.placement} | Date: ${student.date}`;
+    document.getElementById("modalMeta").textContent = `Score: ${student.score}/${student.total} (${student.percentage}%) | Placement: ${student.placement} | Tab Switches Detected: ${student.tabSwitches || 0} | Date: ${student.date}`;
 
     let html = "";
     if (student.details && student.details.length > 0) {
@@ -544,15 +577,15 @@ function exportClassCSV() {
         return;
     }
 
-    let csv = "Student Name,Score,Total,Percentage,Placement,Date,Question Number,Skill,Question Text,Student Answer,Correct Answer,Status\n";
+    let csv = "Student Name,Score,Total,Percentage,Placement,Tab Switches,Date,Question Number,Skill,Question Text,Student Answer,Correct Answer,Status\n";
     records.forEach(r => {
         if (r.details && r.details.length > 0) {
             r.details.forEach((d, idx) => {
                 let status = d.isCorrect ? "Correct" : "Incorrect";
-                csv += `"${r.name.replace(/"/g, '""')}",${r.score},${r.total},${r.percentage}%,"${r.placement}","${r.date}",${idx + 1},"${d.skill.replace(/"/g, '""')}","${d.question.replace(/"/g, '""')}","${d.selectedAnswer.replace(/"/g, '""')}","${d.correctAnswer.replace(/"/g, '""')}","${status}"\n`;
+                csv += `"${r.name.replace(/"/g, '""')}",${r.score},${r.total},${r.percentage}%,"${r.placement}",${r.tabSwitches || 0},"${r.date}",${idx + 1},"${d.skill.replace(/"/g, '""')}","${d.question.replace(/"/g, '""')}","${d.selectedAnswer.replace(/"/g, '""')}","${d.correctAnswer.replace(/"/g, '""')}","${status}"\n`;
             });
         } else {
-            csv += `"${r.name.replace(/"/g, '""')}",${r.score},${r.total},${r.percentage}%,"${r.placement}","${r.date}",N/A,N/A,N/A,N/A,N/A,N/A\n`;
+            csv += `"${r.name.replace(/"/g, '""')}",${r.score},${r.total},${r.percentage}%,"${r.placement}",${r.tabSwitches || 0},"${r.date}",N/A,N/A,N/A,N/A,N/A,N/A\n`;
         }
     });
 
@@ -594,6 +627,8 @@ function startTest() {
 
     currentQuestionIndex = 0;
     score = 0;
+    tabSwitchCount = 0;
+    isTestActive = true;
     masterSkills.clear();
     lackingSkills.clear();
     studentAnswersList = [];
@@ -615,7 +650,6 @@ function showNextQuestion() {
 
     let html = `<div class="question">${currentQuestion.question}</div>`;
     
-    // Shuffle options for display
     let opts = currentQuestion.options.map((opt, idx) => ({ text: opt, isCorrect: idx === currentQuestion.answer }));
     opts.sort(() => Math.random() - 0.5);
     currentQuestion.shuffledOpts = opts;
@@ -659,6 +693,7 @@ function submitAnswer() {
 }
 
 function finishTest() {
+    isTestActive = false;
     clearInterval(timerInterval);
     document.getElementById("testScreen").classList.add("hidden");
     document.getElementById("resultScreen").classList.remove("hidden");
@@ -685,6 +720,7 @@ function finishTest() {
         total: totalQuestions,
         percentage: percentage,
         placement: targetGrade,
+        tabSwitches: tabSwitchCount,
         date: new Date().toLocaleDateString(),
         details: studentAnswersList
     });
@@ -701,6 +737,7 @@ function sendToGoogleSheets(percentage, placement, total) {
         total: total,
         percentage: percentage,
         placement: placement,
+        tabSwitches: tabSwitchCount,
         date: new Date().toLocaleString(),
         details: studentAnswersList
     };
