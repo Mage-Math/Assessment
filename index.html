@@ -184,11 +184,11 @@ button:hover {
 }
 
 .question {
-    font-size: 20px;
-    font-weight: bold;
+    font-size: 19px;
+    font-weight: 600;
     margin: 20px 0;
     color: #111;
-    line-height: 1.4;
+    line-height: 1.5;
     white-space: pre-line;
 }
 
@@ -369,36 +369,36 @@ let lackingSkills = new Set();
 let timerInterval = null;
 let timeRemaining = TIME_LIMIT_SECONDS;
 
-/* FIXED QUESTION BANK (NO TOPICS & NO ADAPTIVE LOGIC) */
+/* QUESTION BANK IN FRIENDLY TEACHER TONE (INCLUDES COORDINATE GEOMETRY & WORD PROBLEMS) */
 const questions = [
-    { skill: "Solving Multi-Step Linear Equations", question: "Solve for x: 4(x - 3) = 2x + 10", options: ["x = 11", "x = 7", "x = 5", "x = 13"], answer: 0 },
-    { skill: "Solving Equations with Variables on Both Sides", question: "Solve for y: 7y - 5 = 3(y + 9)", options: ["y = 8", "y = 6", "y = 7", "y = 9"], answer: 0 },
-    { skill: "Linear Inequalities", question: "Solve the inequality: -3x + 7 < 22", options: ["x > -5", "x < -5", "x > 5", "x < 5"], answer: 0 },
-    { skill: "Literal Equations (Rearranging Formulae)", question: "Make 'r' the subject of the formula: A = P(1 + rt)", options: ["r = (A - P) / (Pt)", "r = (A + P) / Pt", "r = A / Pt - 1", "r = (A - 1) / Pt"], answer: 0 },
-    { skill: "Systems of Linear Equations", question: "Solve the system of equations:\n2x + 3y = 12\nx - y = 1", options: ["x = 3, y = 2", "x = 2, y = 3", "x = 4, y = 1", "x = 5, y = 0"], answer: 0 },
-    { skill: "Quadratic Factorisation", question: "Factorise completely: x² - 7x + 12", options: ["(x - 3)(x - 4)", "(x + 3)(x + 4)", "(x - 2)(x - 6)", "(x + 1)(x - 12)"], answer: 0 },
-    { skill: "Arithmetic Sequences", question: "Find the 15th term of the sequence: 5, 9, 13, 17, ...", options: ["61", "57", "65", "53"], answer: 0 },
-    { skill: "Non-Linear Sequences", question: "What is the nth term expression for: 3, 8, 15, 24, 35...?", options: ["n² + 2n", "n² + 2", "2n² + 1", "3n + 0"], answer: 0 },
-    { skill: "Functions & Evaluation", question: "If f(x) = 3x² - 2x + 5, calculate f(-2).", options: ["21", "13", "17", "9"], answer: 0 },
-    { skill: "Angle Properties of Polygons", question: "Calculate the interior angle sum of a regular hexagon (6 sides).", options: ["720°", "540°", "360°", "900°"], answer: 0 },
-    { skill: "Pythagoras Theorem", question: "A right-angled triangle has legs of 9 cm and 12 cm. Find the hypotenuse.", options: ["15 cm", "18 cm", "21 cm", "13 cm"], answer: 0 },
-    { skill: "Right-Angled Trigonometry", question: "In a right triangle, side opposite angle θ is 8 cm, hypotenuse is 10 cm. Find sin(θ).", options: ["0.8", "0.6", "1.25", "0.75"], answer: 0 },
-    { skill: "Volume of 3D Shapes", question: "A cylinder has radius 3 cm and height 10 cm. Find its volume in terms of π.", options: ["90π cm³", "60π cm³", "30π cm³", "180π cm³"], answer: 0 },
-    { skill: "Percentage Change", question: "An item costing $150 is increased by 20%. What is the new price?", options: ["$180", "$170", "$190", "$160"], answer: 0 },
-    { skill: "Compound Interest", question: "Calculate total value of $1,000 invested at 5% compound interest per annum for 2 years.", options: ["$1,102.50", "$1,100.00", "$1,050.00", "$1,125.00"], answer: 0 },
-    { skill: "Inverse Proportion", question: "It takes 6 workers 8 hours to build a wall. How long will it take 4 workers?", options: ["12 hours", "10 hours", "14 hours", "9 hours"], answer: 0 },
-    { skill: "Operations with Integers", question: "Calculate: -7 + 12 - 5", options: ["0", "-10", "10", "14"], answer: 0 },
-    { skill: "Standard Form / Scientific Notation", question: "Write 0.00072 in standard form.", options: ["7.2 × 10⁻⁴", "7.2 × 10⁻³", "72 × 10⁻⁵", "0.72 × 10⁻³"], answer: 0 },
-    { skill: "Index Laws", question: "Simplify: 2³ × 2⁴", options: ["2⁷", "2¹²", "4⁷", "4¹²"], answer: 0 },
-    { skill: "Highest Common Factor", question: "Find the HCF of 84 and 126.", options: ["42", "14", "21", "84"], answer: 0 },
-    { skill: "Ratios & Sharing", question: "Divide 360 in the ratio 4:5. What is the larger share?", options: ["200", "160", "180", "120"], answer: 0 },
-    { skill: "Reverse Percentages", question: "A jacket costs $1020 after a 15% discount. What was its original price?", options: ["$1200", "$1150", "$1250", "$1300"], answer: 0 },
-    { skill: "Direct Proportion", question: "y is directly proportional to x. When x = 4, y = 18. Find y when x = 10.", options: ["45", "36", "40", "54"], answer: 0 },
-    { skill: "Expansion of Brackets", question: "Expand: 4(2x - 3)", options: ["8x - 12", "8x - 3", "6x - 12", "8x + 12"], answer: 0 },
-    { skill: "Single-Bracket Factorisation", question: "Factorise: 12x + 18", options: ["6(2x + 3)", "3(4x + 6)", "2(6x + 9)", "12(x + 18)"], answer: 0 },
-    { skill: "Coordinate Geometry / Translations", question: "Point (-2,5) is translated 4 units right and 3 units down. Find new coordinates.", options: ["(2,2)", "(-6,8)", "(2,8)", "(-6,2)"], answer: 0 },
-    { skill: "Averages & Mean", question: "The mean of five numbers is 12. Four numbers are 8, 11, 13 and 15. Find the fifth.", options: ["14", "12", "13", "15"], answer: 0 },
-    { skill: "Basic Probability", question: "A bag contains 3 blue balls and 7 red balls. Probability of choosing blue?", options: ["3/10", "3/7", "7/10", "1/3"], answer: 0 }
+    { skill: "Solving Multi-Step Linear Equations", question: "Can you solve this equation for x?\n4(x - 3) = 2x + 10", options: ["x = 11", "x = 7", "x = 5", "x = 13"], answer: 0 },
+    { skill: "Solving Equations with Variables on Both Sides", question: "Find the value of y that makes this equation true:\n7y - 5 = 3(y + 9)", options: ["y = 8", "y = 6", "y = 7", "y = 9"], answer: 0 },
+    { skill: "Linear Inequalities", question: "If you solve the inequality -3x + 7 < 22, which answer gives the correct range for x?", options: ["x > -5", "x < -5", "x > 5", "x < 5"], answer: 0 },
+    { skill: "Literal Equations (Rearranging Formulae)", question: "In the interest formula A = P(1 + rt), rearrange the equation to make 'r' the subject.", options: ["r = (A - P) / (Pt)", "r = (A + P) / Pt", "r = A / Pt - 1", "r = (A - 1) / Pt"], answer: 0 },
+    { skill: "Word Problems / Systems of Linear Equations", question: "A bakery sells 2 muffins and 3 cookies for $12. Another customer buys 1 muffin and 1 cookie for $5. How much does 1 muffin (x) and 1 cookie (y) cost?", options: ["Muffin = $3, Cookie = $2", "Muffin = $2, Cookie = $3", "Muffin = $4, Cookie = $1", "Muffin = $5, Cookie = $0"], answer: 0 },
+    { skill: "Quadratic Factorisation", question: "If we factorise the expression x² - 7x + 12 completely, which set of brackets do we get?", options: ["(x - 3)(x - 4)", "(x + 3)(x + 4)", "(x - 2)(x - 6)", "(x + 1)(x - 12)"], answer: 0 },
+    { skill: "Arithmetic Sequences", question: "Look at this number pattern: 5, 9, 13, 17, ...\nIf it keeps growing the same way, what will the 15th term be?", options: ["61", "57", "65", "53"], answer: 0 },
+    { skill: "Non-Linear Sequences", question: "Can you figure out the nth term rule for this sequence?\n3, 8, 15, 24, 35...", options: ["n² + 2n", "n² + 2", "2n² + 1", "3n + 0"], answer: 0 },
+    { skill: "Functions & Evaluation", question: "Given the function f(x) = 3x² - 2x + 5, what is the output value when x = -2?", options: ["21", "13", "17", "9"], answer: 0 },
+    { skill: "Angle Properties of Polygons", question: "What is the total sum of all the interior angles inside any 6-sided polygon (hexagon)?", options: ["720°", "540°", "360°", "900°"], answer: 0 },
+    { skill: "Word Problems / Pythagoras Theorem", question: "A ladder reaches up a vertical wall. The base of the ladder is 9 cm from the wall, and it reaches 12 cm up the wall. How long is the ladder?", options: ["15 cm", "18 cm", "21 cm", "13 cm"], answer: 0 },
+    { skill: "Right-Angled Trigonometry", question: "In a right-angled triangle, the side opposite angle θ is 8 cm long and the hypotenuse is 10 cm long. What is sin(θ)?", options: ["0.8", "0.6", "1.25", "0.75"], answer: 0 },
+    { skill: "Volume of 3D Shapes", question: "A cylindrical container has a radius of 3 cm and a height of 10 cm. What is its volume in terms of π?", options: ["90π cm³", "60π cm³", "30π cm³", "180π cm³"], answer: 0 },
+    { skill: "Word Problems / Percentage Increase", question: "A store increases the price of a $150 jacket by 20%. What is the new price tag?", options: ["$180", "$170", "$190", "$160"], answer: 0 },
+    { skill: "Word Problems / Compound Interest", question: "You deposit $1,000 into a savings account that pays 5% compound interest each year. How much money will be in the account after 2 years?", options: ["$1,102.50", "$1,100.00", "$1,050.00", "$1,125.00"], answer: 0 },
+    { skill: "Word Problems / Inverse Proportion", question: "It takes 6 painters 8 hours to paint a fence. If only 4 painters show up and work at the exact same pace, how long will it take them?", options: ["12 hours", "10 hours", "14 hours", "9 hours"], answer: 0 },
+    { skill: "Operations with Integers", question: "Let's simplify this step-by-step: what is -7 + 12 - 5?", options: ["0", "-10", "10", "14"], answer: 0 },
+    { skill: "Standard Form / Scientific Notation", question: "How would you write 0.00072 in standard scientific notation?", options: ["7.2 × 10⁻⁴", "7.2 × 10⁻³", "72 × 10⁻⁵", "0.72 × 10⁻³"], answer: 0 },
+    { skill: "Index Laws", question: "Using the laws of indices, simplify: 2³ × 2⁴", options: ["2⁷", "2¹²", "4⁷", "4¹²"], answer: 0 },
+    { skill: "Highest Common Factor", question: "What is the Highest Common Factor (HCF) of 84 and 126?", options: ["42", "14", "21", "84"], answer: 0 },
+    { skill: "Word Problems / Ratios & Sharing", question: "Two friends split $360 in the ratio 4:5. How much money does the person with the larger share get?", options: ["$200", "$160", "$180", "$120"], answer: 0 },
+    { skill: "Word Problems / Reverse Percentages", question: "After a 15% discount, a coat is selling for $1,020. What was the coat's original price before the sale?", options: ["$1,200", "$1,150", "$1,250", "$1,300"], answer: 0 },
+    { skill: "Coordinate Geometry / Slope (Gradient)", question: "On a grid, a line passes through points (1, 3) and (5, 11). What is the gradient (slope) of this line?", options: ["2", "4", "0.5", "3"], answer: 0 },
+    { skill: "Coordinate Geometry / Midpoint Formula", question: "What are the coordinates of the midpoint of a line segment connecting Point A(2, 4) and Point B(8, 10)?", options: ["(5, 7)", "(3, 3)", "(10, 14)", "(6, 6)"], answer: 0 },
+    { skill: "Single-Bracket Factorisation", question: "Factorise this algebraic expression completely: 12x + 18", options: ["6(2x + 3)", "3(4x + 6)", "2(6x + 9)", "12(x + 18)"], answer: 0 },
+    { skill: "Coordinate Geometry / Grid Translations", question: "If point (-2, 5) on a graph is shifted 4 units to the right and 3 units down, where does it land?", options: ["(2, 2)", "(-6, 8)", "(2, 8)", "(-6, 2)"], answer: 0 },
+    { skill: "Word Problems / Averages & Mean", question: "A student took 5 quizzes. Their mean score was 12. Four of the quiz scores were 8, 11, 13, and 15. What was the fifth quiz score?", options: ["14", "12", "13", "15"], answer: 0 },
+    { skill: "Basic Probability", question: "A bag contains 3 blue marbles and 7 red marbles. If you pick one marble without looking, what is the probability it is blue?", options: ["3/10", "3/7", "7/10", "1/3"], answer: 0 }
 ];
 
 /* TEACHER PORTAL LOGIC */
