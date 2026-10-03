@@ -354,7 +354,7 @@ button:hover {
 
 <script>
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx7MAqukTjRKyzbzS4KiiiEbMCubFTYgOGZNmrTFFo8CD-CJtuLZv0qzJ9uGhDKQg/exec";
-const TEACHER_PIN = "1234";
+const TEACHER_PIN = "egam@2026";
 
 const TIME_LIMIT_SECONDS = 45 * 60;
 
@@ -403,13 +403,13 @@ const questions = [
 
 /* TEACHER PORTAL LOGIC */
 function openTeacherLogin() {
-    let pin = prompt("Enter Security PIN to access Teacher Dashboard:");
+    let pin = prompt("Enter Security Passcode to access Teacher Dashboard:");
     if (pin === TEACHER_PIN) {
         document.getElementById("startScreen").classList.add("hidden");
         document.getElementById("teacherScreen").classList.remove("hidden");
         loadTeacherDashboard();
     } else if (pin !== null) {
-        alert("Incorrect PIN. Access Denied.");
+        alert("Incorrect Passcode. Access Denied.");
     }
 }
 
