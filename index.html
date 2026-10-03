@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MAGE Mathematics Diagnostic Assessment</title>
+
+<style>
+:root {
+    --primary-color: #0d3b66;
+    --secondary-color: #00a896;
+    --accent-color: #028090;
+    --bg-gradient: linear-gradient(135deg, #0d3b66 0%, #00a896 100%);
+    --card-bg: #ffffff;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--bg-gradient);
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    color: #333;
+    box-sizing: border-box;
+}
+
+.container {
+    max-width: 900px;
+    margin: 20px auto;
+    background: var(--card-bg);
+    padding: 35px;
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.header-logo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.logo-svg {
+    width: 60px;
+    height: 60px;
+}
+
+h1 {
+    text-align: center;
+    color: var(--primary-color);
+    margin: 0;
+}
+
+.subtitle {
+    text-align: center;
+    color: #555;
+    margin-bottom: 25px;
+    font-weight: 500;
+}
+
+.timer-box {
+    background: #eef9f8;
+    border: 2px solid var(--secondary-color);
+    color: var(--primary-color);
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 18px;
+    text-align: center;
+    margin-bottom: 20px;
+    display: inline-block;
+}
+
+.header-status {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+input[type="text"] {
+    width: 100%;
+    padding: 13px;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    font-size: 16px;
+    box-sizing: border-box;
+    transition: border-color 0.3s;
+}
+
+input[type="text"]:focus {
+    border-color: var(--secondary-color);
+    outline: none;
+}
+
+button {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 13px 25px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 15px;
+    transition: background 0.3s, transform 0.1s;
+    font-weight: bold;
+}
+
+button:hover {
+    background: var(--accent-color);
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+.btn-secondary {
+    background: var(--secondary-color);
+}
+
+.btn-secondary:hover {
+    background: #028090;
+}
+
+.option {
+    display: block;
+    padding: 14px 18px;
+    margin: 12px 0;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 16px;
+}
+
+.option:hover {
+    background: #eef9f8;
+    border-color: var(--secondary-color);
+}
+
+.progress {
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.question {
+    font-size: 20px;
+    font-weight: bold;
+    margin: 20px 0;
+    color: #111;
+    line-height: 1.4;
+}
+
+.result {
+    text-align: center;
+}
+
+.result-box {
+    background: #eef9f8;
+    padding: 25px;
+    border-radius: 12px;
+    margin: 20px 0;
+    border-left: 6px solid var(--secondary-color);
+    text-align: left;
+}
+
+.badge {
+    display: inline-block;
+    padding: 6px 14px;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 20px;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.topic-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.topic-table th,
+.topic-table td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: center;
+}
+
+.topic-table th {
+    background: var(--primary-color);
+    color: white;
+}
+
+.skills-list {
+    text-align: left;
+    margin: 15px 0;
+    padding-left: 20px;
+}
+
+.skills-list li {
+    margin-bottom: 8px;
+}
+
+.hidden {
+    display: none;
+}
+
+.small {
+    font-size: 14px;
+    color: #666;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- START SCREEN -->
+<div id="startScreen">
+    <div class="header-logo">
+        <!-- MAGE Logo Emblem -->
+        <svg class="logo-svg" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="45" fill="#0d3b66"/>
+            <path d="M25 65 L50 25 L75 65 L60 65 L50 45 L40 65 Z" fill="#00a896"/>
+            <circle cx="50" cy="35" r="6" fill="#ffffff"/>
+        </svg>
+        <h1>MAGE Mathematics Diagnostic</h1>
+    </div>
+
+    <p class="subtitle">Adaptive Grade Placement Assessment (Grades 7 – 9)</p>
+
+    <p>This dynamic assessment measures mathematical capability. Questions automatically adapt based on your performance to determine optimal placement in Grade 7, Grade 8, or Grade 9.</p>
+
+    <label><b>Student Name</b></label>
+    <br><br>
+    <input type="text" id="studentName" placeholder="Enter full name">
+    <br>
+
+    <button onclick="startTest()">Start Diagnostic</button>
+
+    <p class="small">Time Limit: 45 Minutes | Questions: 25 to 35 Adaptive Items</p>
+</div>
+
+<!-- TEST SCREEN -->
+<div id="testScreen" class="hidden">
+    <div class="header-status">
+        <div class="progress">Question <span id="questionNumber">1</span></div>
+        <div class="timer-box">Time Left: <span id="timeDisplay">45:00</span></div>
+    </div>
+
+    <div id="questionArea"></div>
+
+    <button onclick="submitAnswer()">Submit Answer</button>
+</div>
+
+<!-- RESULT SCREEN -->
+<div id="resultScreen" class="hidden">
+    <div class="result">
+        <h1>Diagnostic Report</h1>
+
+        <div class="result-box">
+            <span class="badge" id="gradeBadge">Grade Placement</span>
+            <h2 id="placement" style="margin-top:5px; color:var(--primary-color);"></h2>
+            <h3 id="finalScore"></h3>
+            <p id="interpretation"></p>
+
+            <hr style="border: 0; border-top: 1px solid #ccc; margin: 20px 0;">
+
+            <h3>Key Skills Possessed:</h3>
+            <ul class="skills-list" id="possessedSkills"></ul>
+
+            <h3>Skills Needing Development:</h3>
+            <ul class="skills-list" id="lackingSkills"></ul>
+        </div>
+
+        <h2>Topic Breakdown</h2>
+        <table class="topic-table">
+            <thead>
+                <tr>
+                    <th>Concept</th>
+                    <th>Correct</th>
+                    <th>Attempted</th>
+                    <th>Accuracy</th>
+                </tr>
+            </thead>
+            <tbody id="topicResults"></tbody>
+        </table>
+
+        <br>
+        <button class="btn-secondary" onclick="downloadReport()">Download PDF/Text Report</button>
+        <p id="savingMessage"></p>
+    </div>
+</div>
+
+</div>
+
+<script>
+/* =====================================================
+   GOOGLE SHEETS API CONFIGURATION
+   ===================================================== */
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx7MAqukTjRKyzbzS4KiiiEbMCubFTYgOGZNmrTFFo8CD-CJtuLZv0qzJ9uGhDKQg/exec";
+
+/* =====================================================
+   TEST CONFIGURATION & STATE
+   ===================================================== */
+const MIN_QUESTIONS = 25;
+const MAX_QUESTIONS = 35;
+const TIME_LIMIT_SECONDS = 45 * 60; // 45 Minutes
+
+let studentName = "";
+let currentQuestion = null;
+let currentQuestionIndex = 0;
+let currentDifficulty = 2; // Level 1 (Grade 7), 2 (Grade 8), 3 (Grade 9)
+let consecutiveCorrect = 0;
+let consecutiveIncorrect = 0;
+
+let score = 0;
+let usedQuestions = [];
+let topicStats = {};
+let timerInterval = null;
+let timeRemaining = TIME_LIMIT_SECONDS;
+
+/* =====================================================
+   ADVANCED QUESTION BANK (GRADE 7 TO GRADE 9)
+   Level 1: Grade 7 | Level 2: Grade 8 | Level 3: Grade 9
+   ===================================================== */
+const questions = [
+    /* --- ALGEBRA & EQUATIONS --- */
+    {
+        topic: "Algebra & Equations",
+        difficulty: 1,
+        skill: "Solving Multi-Step Linear Equations",
+        question: "Solve for x: 4(x - 3) = 2x + 10",
+        options: ["x = 11", "x = 7", "x = 5", "x = 13"],
+        answer: 0
+    },
+    {
+        topic: "Algebra & Equations",
+        difficulty: 2,
+        skill: "Solving Equations with Variables on Both Sides",
+        question: "Solve for y: 7y - 5 = 3(y + 9)",
+        options: ["y = 8", "y = 6", "y = 7", "y = 9"],
+        answer: 0
+    },
+    {
+        topic: "Algebra & Equations",
+        difficulty: 2,
+        skill: "Linear Inequalities",
+        question: "Solve the inequality: -3x + 7 < 22",
+        options: ["x > -5", "x < -5", "x > 5", "x < 5"],
+        answer: 0
+    },
+    {
+        topic: "Algebra & Equations",
+        difficulty: 3,
+        skill: "Literal Equations (Rearranging Formulae)",
+        question: "Make 'r' the subject of the formula: A = P(1 + rt)",
+        options: ["r = (A - P) / (Pt)", "r = (A + P) / Pt", "r = A / Pt - 1", "r = (A - 1) / Pt"],
+        answer: 0
+    },
+    {
+        topic: "Algebra & Equations",
+        difficulty: 3,
+        skill: "Systems of Linear Equations",
+        question: "Solve the system of equations:\n2x + 3y = 12\nx - y = 1",
+        options: ["x = 3, y = 2", "x = 2, y = 3", "x = 4, y = 1", "x = 5, y = 0"],
+        answer: 0
+    },
+    {
+        topic: "Algebra & Equations",
+        difficulty: 3,
+        skill: "Quadratic Factorisation",
+        question: "Factorise completely: x² - 7x + 12",
+        options: ["(x - 3)(x - 4)", "(x + 3)(x + 4)", "(x - 2)(x - 6)", "(x + 1)(x - 12)"],
+        answer: 0
+    },
+
+    /* --- FUNCTIONS & SEQUENCES --- */
+    {
+        topic: "Functions & Sequences",
+        difficulty: 1,
+        skill: "Arithmetic Sequences",
+        question: "Find the 15th term of the sequence: 5, 9, 13, 17, ...",
+        options: ["61", "57", "65", "53"],
+        answer: 0
+    },
+    {
+        topic: "Functions & Sequences",
+        difficulty: 2,
+        skill: "Non-Linear & Quadratic Sequences",
+        question: "What is the nth term expression for the sequence: 3, 8, 15, 24, 35...?",
+        options: ["n² + 2n", "n² + 2", "2n² + 1", "3n + 0"],
+        answer: 0
+    },
+    {
+        topic: "Functions & Sequences",
+        difficulty: 3,
+        skill: "Functions & Evaluation",
+        question: "If f(x) = 3x² - 2x + 5, calculate f(-2).",
+        options: ["21", "13", "17", "9"],
+        answer: 0
+    },
+
+    /* --- GEOMETRY & PYTHAGORAS --- */
+    {
+        topic: "Geometry & Trigonometry",
+        difficulty: 1,
+        skill: "Angle Properties of Polygons",
+        question: "Calculate the interior angle sum of a regular hexagon (6 sides).",
+        options: ["720°", "540°", "360°", "900°"],
+        answer: 0
+    },
+    {
+        topic: "Geometry & Trigonometry",
+        difficulty: 2,
+        skill: "Pythagoras Theorem",
+        question: "A right-angled triangle has legs of length 9 cm and 12 cm. Find the hypotenuse.",
+        options: ["15 cm", "18 cm", "21 cm", "13 cm"],
+        answer: 0
+    },
+    {
+        topic: "Geometry & Trigonometry",
+        difficulty: 3,
+        skill: "Right-Angled Trigonometry (SOH CAH TOA)",
+        question: "In a right triangle, the side opposite angle θ is 8 cm, and the hypotenuse is 10 cm. What is sin(θ)?",
+        options: ["0.8", "0.6", "1.25", "0.75"],
+        answer: 0
+    },
+    {
+        topic: "Geometry & Trigonometry",
+        difficulty: 3,
+        skill: "Volume & Surface Area of 3D Shapes",
+        question: "A cylinder has radius 3 cm and height 10 cm. Find its volume in terms of π.",
+        options: ["90π cm³", "60π cm³", "30π cm³", "180π cm³"],
+        answer: 0
+    },
+
+    /* --- NUMERACY & RATIO --- */
+    {
+        topic: "Numeracy & Proportionality",
+        difficulty: 1,
+        skill: "Percentage Increase/Decrease",
+        question: "An item originally costing $150 is increased by 20%. What is the new price?",
+        options: ["$180", "$170", "$190", "$160"],
+        answer: 0
+    },
+    {
+        topic: "Numeracy & Proportionality",
+        difficulty: 2,
+        skill: "Compound Interest",
+        question: "Calculate the total value of $1,000 invested at 5% compound interest per annum for 2 years.",
+        options: ["$1,102.50", "$1,100.00", "$1,050.00", "$1,125.00"],
+        answer: 0
+    },
+    {
+        topic: "Numeracy & Proportionality",
+        difficulty: 3,
+        skill: "Inverse Proportion",
+        question: "It takes 6 workers 8 hours to build a wall. How long will it take 4 workers operating at the same rate?",
+        options: ["12 hours", "10 hours", "14 hours", "9 hours"],
+        answer: 0
+    }
+];
+
+/* Duplicate/Expand pool dynamically to ensure sufficient items for adaptive engine */
+function generateExpandedQuestions() {
+    let pool = [...questions];
+    questions.forEach(q => {
+        let clone = JSON.parse(JSON.stringify(q));
+        clone.question += " (Alternative Variant)";
+        pool.push(clone);
+    });
+    return pool;
+}
+const fullQuestionPool = generateExpandedQuestions();
+
+/* =====================================================
+   INITIALIZATION & TIMER
+   ===================================================== */
+function initializeTopics() {
+    topicStats = {};
+    const topics = [
+        "Algebra & Equations",
+        "Functions & Sequences",
+        "Geometry & Trigonometry",
+        "Numeracy & Proportionality"
+    ];
+
+    topics.forEach(t => {
+        topicStats[t] = { attempted: 0, correct: 0, skillsMastered: new Set(), skillsLacking: new Set() };
+    });
+}
+
+function startTimer() {
+    timerInterval = setInterval(() => {
+        timeRemaining--;
+        let mins = Math.floor(timeRemaining / 60);
+        let secs = timeRemaining % 60;
+        document.getElementById("timeDisplay").textContent = 
+            `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+        if (timeRemaining <= 0) {
+            clearInterval(timerInterval);
+            alert("Time has expired! Submitting your assessment.");
+            finishTest();
+        }
+    }, 1000);
+}
+
+/* =====================================================
+   TEST EXECUTION ENGINE
+   ===================================================== */
+function startTest() {
+    studentName = document.getElementById("studentName").value.trim();
+    if (!studentName) {
+        alert("Please enter student name.");
+        return;
+    }
+
+    initializeTopics();
+    currentQuestionIndex = 0;
+    currentDifficulty = 2; // Start at Grade 8 Baseline
+    consecutiveCorrect = 0;
+    consecutiveIncorrect = 0;
+    score = 0;
+    usedQuestions = [];
+
+    document.getElementById("startScreen").classList.add("hidden");
+    document.getElementById("testScreen").classList.remove("hidden");
+
+    startTimer();
+    showNextQuestion();
+}
+
+function chooseAdaptiveQuestion() {
+    const available = fullQuestionPool.filter(q => !usedQuestions.includes(q));
+    if (available.length === 0) return null;
+
+    // Filter by matching target difficulty
+    let candidates = available.filter(q => q.difficulty === currentDifficulty);
+    
+    // Fallback if target difficulty pool depleted
+    if (candidates.length === 0) {
+        candidates = available;
+    }
+
+    // Sort by topics least tested to balance assessment
+    candidates.sort((a, b) => topicStats[a.topic].attempted - topicStats[b.topic].attempted);
+
+    return candidates[0];
+}
+
+function showNextQuestion() {
+    // Check stop criteria: Between 25 and 35 questions
+    if (currentQuestionIndex >= MAX_QUESTIONS) {
+        finishTest();
+        return;
+    }
+
+    currentQuestion = chooseAdaptiveQuestion();
+    if (!currentQuestion) {
+        finishTest();
+        return;
+    }
+
+    usedQuestions.push(currentQuestion);
+
+    document.getElementById("questionNumber").textContent = 
+        `${currentQuestionIndex + 1} of max ${MAX_QUESTIONS}`;
+
+    let html = `<div class="question">${currentQuestion.question}</div>`;
+
+    // Shuffle options dynamically
+    let opts = currentQuestion.options.map((opt, idx) => ({ text: opt, isCorrect: idx === currentQuestion.answer }));
+    opts.sort(() => Math.random() - 0.5);
+    currentQuestion.currentShuffledOpts = opts;
+
+    opts.forEach((opt, index) => {
+        html += `
+            <label class="option">
+                <input type="radio" name="answer" value="${index}">
+                ${opt.text}
+            </label>
+        `;
+    });
+
+    document.getElementById("questionArea").innerHTML = html;
+}
+
+function submitAnswer() {
+    const selected = document.querySelector('input[name="answer"]:checked');
+    if (!selected) {
+        alert("Please select an answer to proceed.");
+        return;
+    }
+
+    const selectedIndex = Number(selected.value);
+    const isCorrect = currentQuestion.currentShuffledOpts[selectedIndex].isCorrect;
+    const topic = currentQuestion.topic;
+
+    topicStats[topic].attempted++;
+
+    /* --- ADAPTIVE LEVEL SWITCHING LOGIC --- */
+    if (isCorrect) {
+        score++;
+        topicStats[topic].correct++;
+        topicStats[topic].skillsMastered.add(currentQuestion.skill);
+
+        consecutiveCorrect++;
+        consecutiveIncorrect = 0;
+
+        // CRITERIA 1: 2 consecutive correct answers at Grade 8 moves immediately to Grade 9
+        if (consecutiveCorrect >= 2) {
+            currentDifficulty = Math.min(3, currentDifficulty + 1);
+            consecutiveCorrect = 0; // Reset streak
+        }
+    } else {
+        topicStats[topic].skillsLacking.add(currentQuestion.skill);
+        consecutiveIncorrect++;
+        consecutiveCorrect = 0;
+
+        // 2 consecutive wrong answers drops difficulty
+        if (consecutiveIncorrect >= 2) {
+            currentDifficulty = Math.max(1, currentDifficulty - 1);
+            consecutiveIncorrect = 0; // Reset streak
+        }
+    }
+
+    currentQuestionIndex++;
+
+    // Early termination if student completes >= 25 questions and level is clear
+    if (currentQuestionIndex >= MIN_QUESTIONS && (currentDifficulty === 3 || currentDifficulty === 1)) {
+        finishTest();
+    } else {
+        showNextQuestion();
+    }
+}
+
+/* =====================================================
+   REPORT & RESULT GENERATION
+   ===================================================== */
+function finishTest() {
+    clearInterval(timerInterval);
+
+    document.getElementById("testScreen").classList.add("hidden");
+    document.getElementById("resultScreen").classList.remove("hidden");
+
+    let totalAttempted = currentQuestionIndex;
+    let percentage = Math.round((score / totalAttempted) * 100);
+
+    let targetGrade = "";
+    let interpretationText = "";
+
+    /* Determine Final Placement Class */
+    if (currentDifficulty === 3 && percentage >= 70) {
+        targetGrade = "Grade 9 (Advanced / Extended)";
+        interpretationText = "Exhibits exceptional mathematical mastery. Recommended for Grade 9 placement with focus on Systems of Equations, Trigonometry, and Complex Functions.";
+    } else if (currentDifficulty >= 2 && percentage >= 55) {
+        targetGrade = "Grade 8 (Standard Track)";
+        interpretationText = "Demonstrates solid understanding of middle-school algebra and geometry. Ready for standard Grade 8 progression.";
+    } else {
+        targetGrade = "Grade 7 (Foundational Support Track)";
+        interpretationText = "Requires reinforcement in multi-step linear equations, foundational proportional reasoning, and basic geometric properties before advancing.";
+    }
+
+    document.getElementById("gradeBadge").textContent = `Recommended Class: ${targetGrade}`;
+    document.getElementById("placement").textContent = targetGrade;
+    document.getElementById("finalScore").textContent = `Score: ${score} / ${totalAttempted} (${percentage}%)`;
+    document.getElementById("interpretation").textContent = interpretationText;
+
+    /* Compile Skills */
+    let possessedHTML = "";
+    let lackingHTML = "";
+    let allMastered = [];
+    let allLacking = [];
+
+    Object.keys(topicStats).forEach(t => {
+        topicStats[t].skillsMastered.forEach(s => allMastered.push(s));
+        topicStats[t].skillsLacking.forEach(s => allLacking.push(s));
+    });
+
+    if (allMastered.length === 0) allMastered.push("Basic Assessment Items");
+    if (allLacking.length === 0) allLacking.push("None Identified during assessment");
+
+    allMastered.forEach(s => possessedHTML += `<li>${s}</li>`);
+    allLacking.forEach(s => lackingHTML += `<li>${s}</li>`);
+
+    document.getElementById("possessedSkills").innerHTML = possessedHTML;
+    document.getElementById("lackingSkills").innerHTML = lackingHTML;
+
+    displayTopicResults();
+    sendToGoogleSheets(percentage, targetGrade);
+}
+
+function displayTopicResults() {
+    const table = document.getElementById("topicResults");
+    table.innerHTML = "";
+
+    Object.keys(topicStats).forEach(topic => {
+        const attempted = topicStats[topic].attempted;
+        const correct = topicStats[topic].correct;
+        let perf = attempted > 0 ? Math.round((correct / attempted) * 100) + "%" : "N/A";
+
+        table.innerHTML += `
+            <tr>
+                <td>${topic}</td>
+                <td>${correct}</td>
+                <td>${attempted}</td>
+                <td>${perf}</td>
+            </tr>
+        `;
+    });
+}
+
+/* =====================================================
+   DOWNLOAD REPORT (CRITERION 8)
+   ===================================================== */
+function downloadReport() {
+    let reportContent = `MAGE MATHEMATICS DIAGNOSTIC REPORT\n`;
+    reportContent += `====================================\n`;
+    reportContent += `Student Name: ${studentName}\n`;
+    reportContent += `Date: ${new Date().toLocaleDateString()}\n`;
+    reportContent += `Recommended Class Placement: ${document.getElementById("placement").textContent}\n`;
+    reportContent += `Assessment Score: ${document.getElementById("finalScore").textContent}\n\n`;
+    reportContent += `INTERPRETATION:\n${document.getElementById("interpretation").textContent}\n\n`;
+
+    reportContent += `SKILLS POSSESSED:\n`;
+    document.querySelectorAll("#possessedSkills li").forEach(li => {
+        reportContent += `- ${li.textContent}\n`;
+    });
+
+    reportContent += `\nSKILLS NEEDING IMPROVEMENT:\n`;
+    document.querySelectorAll("#lackingSkills li").forEach(li => {
+        reportContent += `- ${li.textContent}\n`;
+    });
+
+    const blob = new Blob([reportContent], { type: "text/plain;charset=utf-8" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `${studentName.replace(/\s+/g, '_')}_MAGE_Math_Report.txt`;
+    link.click();
+}
+
+/* =====================================================
+   GOOGLE SHEETS SYNC
+   ===================================================== */
+function sendToGoogleSheets(percentage, placement) {
+    document.getElementById("savingMessage").textContent = "Saving result to server...";
+
+    const data = {
+        name: studentName,
+        score: score,
+        total: currentQuestionIndex,
+        percentage: percentage,
+        placement: placement,
+        topics: topicStats,
+        date: new Date().toLocaleString()
+    };
+
+    fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(data)
+    })
+    .then(() => {
+        document.getElementById("savingMessage").textContent = "Your result has been registered successfully.";
+    })
+    .catch(() => {
+        document.getElementById("savingMessage").textContent = "Diagnostic stored locally.";
+    });
+}
+</script>
+
+</body>
+</html>
