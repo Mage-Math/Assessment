@@ -258,18 +258,22 @@ button:hover {
     color: #666;
 }
 
-/* Modal Styling */
+/* Modal Styling - Default display is NONE */
 .modal {
+    display: none;
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.6);
-    display: flex;
+    background: rgba(0, 0, 0, 0.6);
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 10000;
+}
+
+.modal.active {
+    display: flex !important;
 }
 
 .modal-content {
@@ -418,8 +422,8 @@ button:hover {
 
 </div>
 
-<!-- STUDENT DETAILS MODAL -->
-<div id="detailModal" class="modal hidden">
+<!-- STUDENT DETAILS MODAL - INLINE HIDDEN BY DEFAULT -->
+<div id="detailModal" class="modal" style="display: none;">
     <div class="modal-content">
         <span class="close-btn" onclick="closeModal()">&times;</span>
         <h2 id="modalStudentName" style="color: var(--primary-color); margin-top:0;"></h2>
@@ -551,11 +555,15 @@ function viewStudentDetails(index) {
     }
 
     document.getElementById("modalDetailsArea").innerHTML = html;
-    document.getElementById("detailModal").classList.remove("hidden");
+    let modal = document.getElementById("detailModal");
+    modal.style.display = "flex";
+    modal.classList.add("active");
 }
 
 function closeModal() {
-    document.getElementById("detailModal").classList.add("hidden");
+    let modal = document.getElementById("detailModal");
+    modal.style.display = "none";
+    modal.classList.remove("active");
 }
 
 function exportClassCSV() {
