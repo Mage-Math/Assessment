@@ -250,7 +250,7 @@ button:hover {
 }
 
 .hidden {
-    display: none;
+    display: none !important;
 }
 
 .small {
@@ -258,7 +258,7 @@ button:hover {
     color: #666;
 }
 
-/* Modal for detailed answers view */
+/* Modal Styling */
 .modal {
     position: fixed;
     top: 0;
@@ -416,6 +416,8 @@ button:hover {
     </table>
 </div>
 
+</div>
+
 <!-- STUDENT DETAILS MODAL -->
 <div id="detailModal" class="modal hidden">
     <div class="modal-content">
@@ -425,8 +427,6 @@ button:hover {
         <hr>
         <div id="modalDetailsArea"></div>
     </div>
-</div>
-
 </div>
 
 <script>
@@ -660,7 +660,6 @@ function submitAnswer() {
     const isCorrect = chosenOpt.isCorrect;
     const correctAnswerText = currentQuestion.options[currentQuestion.answer];
 
-    // Log response detail
     studentAnswersList.push({
         question: currentQuestion.question,
         skill: currentQuestion.skill,
