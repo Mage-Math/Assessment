@@ -7,10 +7,10 @@
 
 <style>
 :root {
-    --primary-color: #0d3b66;
-    --secondary-color: #00a896;
-    --accent-color: #028090;
-    --bg-gradient: linear-gradient(135deg, #0d3b66 0%, #00a896 100%);
+    --primary-color: #0f4c81;
+    --secondary-color: #16a34a;
+    --accent-color: #1e3a8a;
+    --bg-gradient: linear-gradient(135deg, #0f4c81 0%, #16a34a 100%);
     --card-bg: #ffffff;
 }
 
@@ -50,6 +50,7 @@ body {
     font-weight: bold;
     cursor: pointer;
     margin: 0;
+    transition: all 0.3s ease;
 }
 
 .teacher-btn:hover {
@@ -65,15 +66,33 @@ body {
     margin-bottom: 20px;
 }
 
-.logo-svg {
-    width: 60px;
-    height: 60px;
+.logo-container {
+    text-align: center;
+}
+
+.logo-img {
+    max-width: 280px;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+
+.logo-fallback {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--primary-color);
+    margin: 0;
+}
+
+.logo-fallback span {
+    color: var(--secondary-color);
 }
 
 h1 {
     text-align: center;
     color: var(--primary-color);
-    margin: 0;
+    margin: 10px 0 0 0;
+    font-size: 26px;
 }
 
 .subtitle {
@@ -84,7 +103,7 @@ h1 {
 }
 
 .timer-box {
-    background: #eef9f8;
+    background: #f0fdf4;
     border: 2px solid var(--secondary-color);
     color: var(--primary-color);
     padding: 10px 20px;
@@ -103,7 +122,7 @@ h1 {
     margin-bottom: 15px;
 }
 
-input[type="text"], input[type="password"] {
+input[type="text"] {
     width: 100%;
     padding: 13px;
     border: 2px solid #ccc;
@@ -113,7 +132,7 @@ input[type="text"], input[type="password"] {
     transition: border-color 0.3s;
 }
 
-input[type="text"]:focus, input[type="password"]:focus {
+input[type="text"]:focus {
     border-color: var(--secondary-color);
     outline: none;
 }
@@ -140,7 +159,7 @@ button:hover {
 }
 
 .btn-secondary:hover {
-    background: #028090;
+    background: #15803d;
 }
 
 .option {
@@ -155,7 +174,7 @@ button:hover {
 }
 
 .option:hover {
-    background: #eef9f8;
+    background: #f0fdf4;
     border-color: var(--secondary-color);
 }
 
@@ -170,6 +189,7 @@ button:hover {
     margin: 20px 0;
     color: #111;
     line-height: 1.4;
+    white-space: pre-line;
 }
 
 .result {
@@ -177,7 +197,7 @@ button:hover {
 }
 
 .result-box {
-    background: #eef9f8;
+    background: #f0fdf4;
     padding: 25px;
     border-radius: 12px;
     margin: 20px 0;
@@ -244,17 +264,16 @@ button:hover {
     </div>
 
     <div class="header-logo">
-        <svg class="logo-svg" viewBox="0 0 100 100">
-            <circle cx="50" cy="50" r="45" fill="#0d3b66"/>
-            <path d="M25 65 L50 25 L75 65 L60 65 L50 45 L40 65 Z" fill="#00a896"/>
-            <circle cx="50" cy="35" r="6" fill="#ffffff"/>
-        </svg>
-        <h1>MAGE Mathematics Diagnostic</h1>
+        <div class="logo-container">
+            <img src="logo.png" alt="MAGE HYBRID LEARNING" class="logo-img" onerror="this.style.display='none'; document.getElementById('altLogo').style.display='block';">
+            <div id="altLogo" class="logo-fallback" style="display:none;">MAGE <span>HYBRID LEARNING</span></div>
+        </div>
     </div>
 
-    <p class="subtitle">Adaptive Grade Placement Assessment (Grades 7 – 9)</p>
+    <h1>Mathematics Diagnostic Assessment</h1>
+    <p class="subtitle">Grade Placement Assessment (Grades 7 – 9)</p>
 
-    <p>This dynamic assessment measures mathematical capability. Questions automatically adapt based on your performance to determine optimal placement in Grade 7, Grade 8, or Grade 9.</p>
+    <p>This assessment evaluates core mathematical skills to determine optimal class placement across Grades 7, 8, and 9.</p>
 
     <label><b>Student Name</b></label>
     <br><br>
@@ -263,7 +282,7 @@ button:hover {
 
     <button onclick="startTest()">Start Diagnostic</button>
 
-    <p class="small">Time Limit: 45 Minutes | Questions: 25 to 35 Adaptive Items</p>
+    <p class="small">Time Limit: 45 Minutes | Questions: 28 Standardized Items</p>
 </div>
 
 <!-- TEST SCREEN -->
@@ -297,19 +316,6 @@ button:hover {
             <h3>Skills Needing Development:</h3>
             <ul class="skills-list" id="lackingSkills"></ul>
         </div>
-
-        <h2>Topic Breakdown</h2>
-        <table class="topic-table">
-            <thead>
-                <tr>
-                    <th>Concept</th>
-                    <th>Correct</th>
-                    <th>Attempted</th>
-                    <th>Accuracy</th>
-                </tr>
-            </thead>
-            <tbody id="topicResults"></tbody>
-        </table>
 
         <br>
         <button class="btn-secondary" onclick="downloadReport()">Download Report (.txt)</button>
@@ -348,47 +354,54 @@ button:hover {
 
 <script>
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx7MAqukTjRKyzbzS4KiiiEbMCubFTYgOGZNmrTFFo8CD-CJtuLZv0qzJ9uGhDKQg/exec";
-const TEACHER_PIN = "1234"; // DEFAULT SECURITY PIN
+const TEACHER_PIN = "1234";
 
-const MIN_QUESTIONS = 25;
-const MAX_QUESTIONS = 35;
 const TIME_LIMIT_SECONDS = 45 * 60;
 
 let studentName = "";
 let currentQuestion = null;
 let currentQuestionIndex = 0;
-let currentDifficulty = 2;
-let consecutiveCorrect = 0;
-let consecutiveIncorrect = 0;
 let score = 0;
-let usedQuestions = [];
-let topicStats = {};
+
+let masterSkills = new Set();
+let lackingSkills = new Set();
+
 let timerInterval = null;
 let timeRemaining = TIME_LIMIT_SECONDS;
 
+/* FIXED QUESTION BANK (NO TOPICS & NO ADAPTIVE LOGIC) */
 const questions = [
-    { topic: "Algebra & Equations", difficulty: 1, skill: "Solving Multi-Step Linear Equations", question: "Solve for x: 4(x - 3) = 2x + 10", options: ["x = 11", "x = 7", "x = 5", "x = 13"], answer: 0 },
-    { topic: "Algebra & Equations", difficulty: 2, skill: "Solving Equations with Variables on Both Sides", question: "Solve for y: 7y - 5 = 3(y + 9)", options: ["y = 8", "y = 6", "y = 7", "y = 9"], answer: 0 },
-    { topic: "Algebra & Equations", difficulty: 3, skill: "Literal Equations", question: "Make 'r' the subject of the formula: A = P(1 + rt)", options: ["r = (A - P) / (Pt)", "r = (A + P) / Pt", "r = A / Pt - 1", "r = (A - 1) / Pt"], answer: 0 },
-    { topic: "Algebra & Equations", difficulty: 3, skill: "Systems of Linear Equations", question: "Solve the system:\n2x + 3y = 12\nx - y = 1", options: ["x = 3, y = 2", "x = 2, y = 3", "x = 4, y = 1", "x = 5, y = 0"], answer: 0 },
-    { topic: "Functions & Sequences", difficulty: 1, skill: "Arithmetic Sequences", question: "Find the 15th term: 5, 9, 13, 17, ...", options: ["61", "57", "65", "53"], answer: 0 },
-    { topic: "Functions & Sequences", difficulty: 2, skill: "Non-Linear Sequences", question: "Find the nth term for: 3, 8, 15, 24, 35...", options: ["n² + 2n", "n² + 2", "2n² + 1", "3n + 0"], answer: 0 },
-    { topic: "Geometry & Trigonometry", difficulty: 2, skill: "Pythagoras Theorem", question: "Right triangle with legs 9 cm and 12 cm. Find hypotenuse.", options: ["15 cm", "18 cm", "21 cm", "13 cm"], answer: 0 },
-    { topic: "Numeracy & Proportionality", difficulty: 3, skill: "Inverse Proportion", question: "6 workers take 8 hours to build a wall. How long for 4 workers?", options: ["12 hours", "10 hours", "14 hours", "9 hours"], answer: 0 }
+    { skill: "Solving Multi-Step Linear Equations", question: "Solve for x: 4(x - 3) = 2x + 10", options: ["x = 11", "x = 7", "x = 5", "x = 13"], answer: 0 },
+    { skill: "Solving Equations with Variables on Both Sides", question: "Solve for y: 7y - 5 = 3(y + 9)", options: ["y = 8", "y = 6", "y = 7", "y = 9"], answer: 0 },
+    { skill: "Linear Inequalities", question: "Solve the inequality: -3x + 7 < 22", options: ["x > -5", "x < -5", "x > 5", "x < 5"], answer: 0 },
+    { skill: "Literal Equations (Rearranging Formulae)", question: "Make 'r' the subject of the formula: A = P(1 + rt)", options: ["r = (A - P) / (Pt)", "r = (A + P) / Pt", "r = A / Pt - 1", "r = (A - 1) / Pt"], answer: 0 },
+    { skill: "Systems of Linear Equations", question: "Solve the system of equations:\n2x + 3y = 12\nx - y = 1", options: ["x = 3, y = 2", "x = 2, y = 3", "x = 4, y = 1", "x = 5, y = 0"], answer: 0 },
+    { skill: "Quadratic Factorisation", question: "Factorise completely: x² - 7x + 12", options: ["(x - 3)(x - 4)", "(x + 3)(x + 4)", "(x - 2)(x - 6)", "(x + 1)(x - 12)"], answer: 0 },
+    { skill: "Arithmetic Sequences", question: "Find the 15th term of the sequence: 5, 9, 13, 17, ...", options: ["61", "57", "65", "53"], answer: 0 },
+    { skill: "Non-Linear Sequences", question: "What is the nth term expression for: 3, 8, 15, 24, 35...?", options: ["n² + 2n", "n² + 2", "2n² + 1", "3n + 0"], answer: 0 },
+    { skill: "Functions & Evaluation", question: "If f(x) = 3x² - 2x + 5, calculate f(-2).", options: ["21", "13", "17", "9"], answer: 0 },
+    { skill: "Angle Properties of Polygons", question: "Calculate the interior angle sum of a regular hexagon (6 sides).", options: ["720°", "540°", "360°", "900°"], answer: 0 },
+    { skill: "Pythagoras Theorem", question: "A right-angled triangle has legs of 9 cm and 12 cm. Find the hypotenuse.", options: ["15 cm", "18 cm", "21 cm", "13 cm"], answer: 0 },
+    { skill: "Right-Angled Trigonometry", question: "In a right triangle, side opposite angle θ is 8 cm, hypotenuse is 10 cm. Find sin(θ).", options: ["0.8", "0.6", "1.25", "0.75"], answer: 0 },
+    { skill: "Volume of 3D Shapes", question: "A cylinder has radius 3 cm and height 10 cm. Find its volume in terms of π.", options: ["90π cm³", "60π cm³", "30π cm³", "180π cm³"], answer: 0 },
+    { skill: "Percentage Change", question: "An item costing $150 is increased by 20%. What is the new price?", options: ["$180", "$170", "$190", "$160"], answer: 0 },
+    { skill: "Compound Interest", question: "Calculate total value of $1,000 invested at 5% compound interest per annum for 2 years.", options: ["$1,102.50", "$1,100.00", "$1,050.00", "$1,125.00"], answer: 0 },
+    { skill: "Inverse Proportion", question: "It takes 6 workers 8 hours to build a wall. How long will it take 4 workers?", options: ["12 hours", "10 hours", "14 hours", "9 hours"], answer: 0 },
+    { skill: "Operations with Integers", question: "Calculate: -7 + 12 - 5", options: ["0", "-10", "10", "14"], answer: 0 },
+    { skill: "Standard Form / Scientific Notation", question: "Write 0.00072 in standard form.", options: ["7.2 × 10⁻⁴", "7.2 × 10⁻³", "72 × 10⁻⁵", "0.72 × 10⁻³"], answer: 0 },
+    { skill: "Index Laws", question: "Simplify: 2³ × 2⁴", options: ["2⁷", "2¹²", "4⁷", "4¹²"], answer: 0 },
+    { skill: "Highest Common Factor", question: "Find the HCF of 84 and 126.", options: ["42", "14", "21", "84"], answer: 0 },
+    { skill: "Ratios & Sharing", question: "Divide 360 in the ratio 4:5. What is the larger share?", options: ["200", "160", "180", "120"], answer: 0 },
+    { skill: "Reverse Percentages", question: "A jacket costs $1020 after a 15% discount. What was its original price?", options: ["$1200", "$1150", "$1250", "$1300"], answer: 0 },
+    { skill: "Direct Proportion", question: "y is directly proportional to x. When x = 4, y = 18. Find y when x = 10.", options: ["45", "36", "40", "54"], answer: 0 },
+    { skill: "Expansion of Brackets", question: "Expand: 4(2x - 3)", options: ["8x - 12", "8x - 3", "6x - 12", "8x + 12"], answer: 0 },
+    { skill: "Single-Bracket Factorisation", question: "Factorise: 12x + 18", options: ["6(2x + 3)", "3(4x + 6)", "2(6x + 9)", "12(x + 18)"], answer: 0 },
+    { skill: "Coordinate Geometry / Translations", question: "Point (-2,5) is translated 4 units right and 3 units down. Find new coordinates.", options: ["(2,2)", "(-6,8)", "(2,8)", "(-6,2)"], answer: 0 },
+    { skill: "Averages & Mean", question: "The mean of five numbers is 12. Four numbers are 8, 11, 13 and 15. Find the fifth.", options: ["14", "12", "13", "15"], answer: 0 },
+    { skill: "Basic Probability", question: "A bag contains 3 blue balls and 7 red balls. Probability of choosing blue?", options: ["3/10", "3/7", "7/10", "1/3"], answer: 0 }
 ];
 
-function generatePool() {
-    let pool = [...questions];
-    questions.forEach(q => {
-        let c = JSON.parse(JSON.stringify(q));
-        c.question += " (Variant)";
-        pool.push(c);
-    });
-    return pool;
-}
-const fullQuestionPool = generatePool();
-
-/* ================= TEACHER PORTAL & SECURITY PIN ================= */
+/* TEACHER PORTAL LOGIC */
 function openTeacherLogin() {
     let pin = prompt("Enter Security PIN to access Teacher Dashboard:");
     if (pin === TEACHER_PIN) {
@@ -454,14 +467,7 @@ function clearClassData() {
     }
 }
 
-/* ================= TEST LOGIC ================= */
-function initializeTopics() {
-    topicStats = {};
-    ["Algebra & Equations", "Functions & Sequences", "Geometry & Trigonometry", "Numeracy & Proportionality"].forEach(t => {
-        topicStats[t] = { attempted: 0, correct: 0, skillsMastered: new Set(), skillsLacking: new Set() };
-    });
-}
-
+/* TIMER FUNCTIONALITY */
 function startTimer() {
     timerInterval = setInterval(() => {
         timeRemaining--;
@@ -475,19 +481,18 @@ function startTimer() {
     }, 1000);
 }
 
+/* ASSESSMENT TEST LOGIC */
 function startTest() {
     studentName = document.getElementById("studentName").value.trim();
     if (!studentName) {
         alert("Please enter student name.");
         return;
     }
-    initializeTopics();
+
     currentQuestionIndex = 0;
-    currentDifficulty = 2;
-    consecutiveCorrect = 0;
-    consecutiveIncorrect = 0;
     score = 0;
-    usedQuestions = [];
+    masterSkills.clear();
+    lackingSkills.clear();
 
     document.getElementById("startScreen").classList.add("hidden");
     document.getElementById("testScreen").classList.remove("hidden");
@@ -495,36 +500,26 @@ function startTest() {
     showNextQuestion();
 }
 
-function chooseAdaptiveQuestion() {
-    const available = fullQuestionPool.filter(q => !usedQuestions.includes(q));
-    if (available.length === 0) return null;
-    let candidates = available.filter(q => q.difficulty === currentDifficulty);
-    if (candidates.length === 0) candidates = available;
-    candidates.sort((a, b) => topicStats[a.topic].attempted - topicStats[b.topic].attempted);
-    return candidates[0];
-}
-
 function showNextQuestion() {
-    if (currentQuestionIndex >= MAX_QUESTIONS) {
+    if (currentQuestionIndex >= questions.length) {
         finishTest();
         return;
     }
-    currentQuestion = chooseAdaptiveQuestion();
-    if (!currentQuestion) {
-        finishTest();
-        return;
-    }
-    usedQuestions.push(currentQuestion);
-    document.getElementById("questionNumber").textContent = `${currentQuestionIndex + 1} of max ${MAX_QUESTIONS}`;
+
+    currentQuestion = questions[currentQuestionIndex];
+    document.getElementById("questionNumber").textContent = `${currentQuestionIndex + 1} of ${questions.length}`;
 
     let html = `<div class="question">${currentQuestion.question}</div>`;
+    
+    // Shuffle options for display
     let opts = currentQuestion.options.map((opt, idx) => ({ text: opt, isCorrect: idx === currentQuestion.answer }));
     opts.sort(() => Math.random() - 0.5);
-    currentQuestion.currentShuffledOpts = opts;
+    currentQuestion.shuffledOpts = opts;
 
     opts.forEach((opt, index) => {
         html += `<label class="option"><input type="radio" name="answer" value="${index}"> ${opt.text}</label>`;
     });
+
     document.getElementById("questionArea").innerHTML = html;
 }
 
@@ -536,37 +531,17 @@ function submitAnswer() {
     }
 
     const selectedIndex = Number(selected.value);
-    const isCorrect = currentQuestion.currentShuffledOpts[selectedIndex].isCorrect;
-    const topic = currentQuestion.topic;
-
-    topicStats[topic].attempted++;
+    const isCorrect = currentQuestion.shuffledOpts[selectedIndex].isCorrect;
 
     if (isCorrect) {
         score++;
-        topicStats[topic].correct++;
-        topicStats[topic].skillsMastered.add(currentQuestion.skill);
-        consecutiveCorrect++;
-        consecutiveIncorrect = 0;
-        if (consecutiveCorrect >= 2) {
-            currentDifficulty = Math.min(3, currentDifficulty + 1);
-            consecutiveCorrect = 0;
-        }
+        masterSkills.add(currentQuestion.skill);
     } else {
-        topicStats[topic].skillsLacking.add(currentQuestion.skill);
-        consecutiveIncorrect++;
-        consecutiveCorrect = 0;
-        if (consecutiveIncorrect >= 2) {
-            currentDifficulty = Math.max(1, currentDifficulty - 1);
-            consecutiveIncorrect = 0;
-        }
+        lackingSkills.add(currentQuestion.skill);
     }
 
     currentQuestionIndex++;
-    if (currentQuestionIndex >= MIN_QUESTIONS && (currentDifficulty === 3 || currentDifficulty === 1)) {
-        finishTest();
-    } else {
-        showNextQuestion();
-    }
+    showNextQuestion();
 }
 
 function finishTest() {
@@ -574,60 +549,47 @@ function finishTest() {
     document.getElementById("testScreen").classList.add("hidden");
     document.getElementById("resultScreen").classList.remove("hidden");
 
-    let totalAttempted = currentQuestionIndex;
-    let percentage = Math.round((score / totalAttempted) * 100);
+    let totalQuestions = questions.length;
+    let percentage = Math.round((score / totalQuestions) * 100);
     let targetGrade = "";
     let interpretationText = "";
 
-    if (currentDifficulty === 3 && percentage >= 70) {
-        targetGrade = "Grade 9 (Advanced)";
-        interpretationText = "Exhibits exceptional mathematical mastery. Ready for Grade 9 Systems of Equations and Trigonometry.";
-    } else if (currentDifficulty >= 2 && percentage >= 55) {
+    if (percentage >= 80) {
+        targetGrade = "Grade 9 (Advanced Track)";
+        interpretationText = "Exhibits outstanding mathematical mastery. Strongly recommended for Grade 9 placement.";
+    } else if (percentage >= 55) {
         targetGrade = "Grade 8 (Standard Track)";
-        interpretationText = "Solid understanding of middle school algebra. Ready for Grade 8 standard curriculum.";
+        interpretationText = "Demonstrates solid middle-school skills. Recommended for standard Grade 8 placement.";
     } else {
-        targetGrade = "Grade 7 (Support Track)";
-        interpretationText = "Needs strengthening in core linear algebra and basic geometric concepts.";
+        targetGrade = "Grade 7 (Foundation Track)";
+        interpretationText = "Requires consolidation of fundamental mathematical concepts. Recommended for Grade 7 placement.";
     }
 
-    document.getElementById("gradeBadge").textContent = `Placement: ${targetGrade}`;
+    document.getElementById("gradeBadge").textContent = `Recommended Placement: ${targetGrade}`;
     document.getElementById("placement").textContent = targetGrade;
-    document.getElementById("finalScore").textContent = `Score: ${score} / ${totalAttempted} (${percentage}%)`;
+    document.getElementById("finalScore").textContent = `Score: ${score} / ${totalQuestions} (${percentage}%)`;
     document.getElementById("interpretation").textContent = interpretationText;
 
     let possessedHTML = "", lackingHTML = "";
-    Object.keys(topicStats).forEach(t => {
-        topicStats[t].skillsMastered.forEach(s => possessedHTML += `<li>${s}</li>`);
-        topicStats[t].skillsLacking.forEach(s => lackingHTML += `<li>${s}</li>`);
-    });
+    masterSkills.forEach(s => possessedHTML += `<li>${s}</li>`);
+    lackingSkills.forEach(s => lackingHTML += `<li>${s}</li>`);
 
     document.getElementById("possessedSkills").innerHTML = possessedHTML || "<li>Basic math concepts</li>";
     document.getElementById("lackingSkills").innerHTML = lackingHTML || "<li>None identified</li>";
 
-    displayTopicResults();
-
-    // Save locally for Teacher Dashboard
+    // Save result locally for Teacher Dashboard
     let existing = JSON.parse(localStorage.getItem("mage_diagnostic_results") || "[]");
     existing.push({
         name: studentName,
         score: score,
-        total: totalAttempted,
+        total: totalQuestions,
         percentage: percentage,
         placement: targetGrade,
         date: new Date().toLocaleDateString()
     });
     localStorage.setItem("mage_diagnostic_results", JSON.stringify(existing));
-}
 
-function displayTopicResults() {
-    const table = document.getElementById("topicResults");
-    table.innerHTML = "";
-    Object.keys(topicStats).forEach(topic => {
-        const attempted = topicStats[topic].attempted;
-        const correct = topicStats[topic].correct;
-        let perf = attempted > 0 ? Math.round((correct / attempted) * 100) + "%" : "N/A";
-        table.innerHTML += `<tr><td>${topic}</td><td>${correct}</td><td>${attempted}</td><td>${perf}</td></tr>`;
-    });
+    sendToGoogleSheets(percentage, targetGrade, totalQuestions);
 }
 
 function downloadReport() {
@@ -637,6 +599,31 @@ function downloadReport() {
     link.href = URL.createObjectURL(blob);
     link.download = `${studentName}_Report.txt`;
     link.click();
+}
+
+function sendToGoogleSheets(percentage, placement, total) {
+    document.getElementById("savingMessage").textContent = "Saving result...";
+    const data = {
+        name: studentName,
+        score: score,
+        total: total,
+        percentage: percentage,
+        placement: placement,
+        date: new Date().toLocaleString()
+    };
+
+    fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(data)
+    })
+    .then(() => {
+        document.getElementById("savingMessage").textContent = "Result submitted successfully.";
+    })
+    .catch(() => {
+        document.getElementById("savingMessage").textContent = "Result recorded locally.";
+    });
 }
 </script>
 
