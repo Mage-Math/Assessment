@@ -204,21 +204,11 @@ button:hover {
 
 .result-box {
     background: #f0fdf4;
-    padding: 25px;
+    padding: 35px 25px;
     border-radius: 12px;
     margin: 20px 0;
     border-left: 6px solid var(--secondary-color);
-    text-align: left;
-}
-
-.badge {
-    display: inline-block;
-    padding: 6px 14px;
-    background: var(--primary-color);
-    color: white;
-    border-radius: 20px;
-    font-size: 14px;
-    margin-bottom: 10px;
+    text-align: center;
 }
 
 .topic-table {
@@ -237,16 +227,6 @@ button:hover {
 .topic-table th {
     background: var(--primary-color);
     color: white;
-}
-
-.skills-list {
-    text-align: left;
-    margin: 15px 0;
-    padding-left: 20px;
-}
-
-.skills-list li {
-    margin-bottom: 8px;
 }
 
 .hidden {
@@ -366,29 +346,19 @@ button:hover {
     <button onclick="submitAnswer()">Submit Answer</button>
 </div>
 
-<!-- RESULT SCREEN -->
+<!-- RESULT SCREEN - SIMPLIFIED FOR STUDENTS -->
 <div id="resultScreen" class="hidden">
     <div class="result">
-        <h1>Diagnostic Report</h1>
+        <h1>Assessment Submitted</h1>
 
         <div class="result-box">
-            <span class="badge" id="gradeBadge">Grade Placement</span>
-            <h2 id="placement" style="margin-top:5px; color:var(--primary-color);"></h2>
-            <h3 id="finalScore"></h3>
-            <p id="interpretation"></p>
-
-            <hr style="border: 0; border-top: 1px solid #ccc; margin: 20px 0;">
-
-            <h3>Key Skills Possessed:</h3>
-            <ul class="skills-list" id="possessedSkills"></ul>
-
-            <h3>Skills Needing Development:</h3>
-            <ul class="skills-list" id="lackingSkills"></ul>
+            <h2 style="color: var(--primary-color); margin-top:0;">Thank You, <span id="displayStudentName"></span>!</h2>
+            <p style="font-size: 18px; color: #444; margin-top: 15px;">
+                Your answers have been successfully recorded. Your teacher will review your responses shortly.
+            </p>
         </div>
 
-        <br>
-        <button class="btn-secondary" onclick="downloadReport()">Download Report (.txt)</button>
-        <p id="savingMessage"></p>
+        <p id="savingMessage" style="font-weight: bold; color: var(--secondary-color);"></p>
     </div>
 </div>
 
@@ -422,7 +392,7 @@ button:hover {
 
 </div>
 
-<!-- STUDENT DETAILS MODAL - INLINE HIDDEN BY DEFAULT -->
+<!-- STUDENT DETAILS MODAL FOR TEACHER USE ONLY -->
 <div id="detailModal" class="modal" style="display: none;">
     <div class="modal-content">
         <span class="close-btn" onclick="closeModal()">&times;</span>
@@ -451,7 +421,7 @@ let studentAnswersList = [];
 let timerInterval = null;
 let timeRemaining = TIME_LIMIT_SECONDS;
 
-/* QUESTION BANK IN FRIENDLY TEACHER TONE */
+/* QUESTION BANK */
 const questions = [
     { skill: "Solving Multi-Step Linear Equations", question: "Can you solve this equation for x?\n4(x - 3) = 2x + 10", options: ["x = 11", "x = 7", "x = 5", "x = 13"], answer: 0 },
     { skill: "Solving Equations with Variables on Both Sides", question: "Find the value of y that makes this equation true:\n7y - 5 = 3(y + 9)", options: ["y = 8", "y = 6", "y = 7", "y = 9"], answer: 0 },
@@ -488,6 +458,7 @@ function openTeacherLogin() {
     let pin = prompt("Enter Security Passcode to access Teacher Dashboard:");
     if (pin === TEACHER_PIN) {
         document.getElementById("startScreen").classList.add("hidden");
+        document.getElementById("resultScreen").classList.add("hidden");
         document.getElementById("teacherScreen").classList.remove("hidden");
         loadTeacherDashboard();
     } else if (pin !== null) {
@@ -695,30 +666,16 @@ function finishTest() {
     let totalQuestions = questions.length;
     let percentage = Math.round((score / totalQuestions) * 100);
     let targetGrade = "";
-    let interpretationText = "";
 
     if (percentage >= 80) {
         targetGrade = "Grade 9 (Advanced Track)";
-        interpretationText = "Exhibits outstanding mathematical mastery. Strongly recommended for Grade 9 placement.";
     } else if (percentage >= 55) {
         targetGrade = "Grade 8 (Standard Track)";
-        interpretationText = "Demonstrates solid middle-school skills. Recommended for standard Grade 8 placement.";
     } else {
         targetGrade = "Grade 7 (Foundation Track)";
-        interpretationText = "Requires consolidation of fundamental mathematical concepts. Recommended for Grade 7 placement.";
     }
 
-    document.getElementById("gradeBadge").textContent = `Recommended Placement: ${targetGrade}`;
-    document.getElementById("placement").textContent = targetGrade;
-    document.getElementById("finalScore").textContent = `Score: ${score} / ${totalQuestions} (${percentage}%)`;
-    document.getElementById("interpretation").textContent = interpretationText;
-
-    let possessedHTML = "", lackingHTML = "";
-    masterSkills.forEach(s => possessedHTML += `<li>${s}</li>`);
-    lackingSkills.forEach(s => lackingHTML += `<li>${s}</li>`);
-
-    document.getElementById("possessedSkills").innerHTML = possessedHTML || "<li>Basic math concepts</li>";
-    document.getElementById("lackingSkills").innerHTML = lackingHTML || "<li>None identified</li>";
+    document.getElementById("displayStudentName").textContent = studentName;
 
     // Save result locally for Teacher Dashboard
     let existing = JSON.parse(localStorage.getItem("mage_diagnostic_results") || "[]");
@@ -736,17 +693,8 @@ function finishTest() {
     sendToGoogleSheets(percentage, targetGrade, totalQuestions);
 }
 
-function downloadReport() {
-    let report = `MAGE MATHEMATICS DIAGNOSTIC REPORT\nName: ${studentName}\nPlacement: ${document.getElementById("placement").textContent}\nScore: ${document.getElementById("finalScore").textContent}\n`;
-    let blob = new Blob([report], { type: "text/plain;charset=utf-8" });
-    let link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `${studentName}_Report.txt`;
-    link.click();
-}
-
 function sendToGoogleSheets(percentage, placement, total) {
-    document.getElementById("savingMessage").textContent = "Saving result...";
+    document.getElementById("savingMessage").textContent = "Saving responses...";
     const data = {
         name: studentName,
         score: score,
@@ -764,10 +712,10 @@ function sendToGoogleSheets(percentage, placement, total) {
         body: JSON.stringify(data)
     })
     .then(() => {
-        document.getElementById("savingMessage").textContent = "Result submitted successfully.";
+        document.getElementById("savingMessage").textContent = "Assessment submitted successfully!";
     })
     .catch(() => {
-        document.getElementById("savingMessage").textContent = "Result recorded locally.";
+        document.getElementById("savingMessage").textContent = "Assessment recorded locally.";
     });
 }
 </script>
