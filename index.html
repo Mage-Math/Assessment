@@ -238,7 +238,6 @@ button:hover {
     color: #666;
 }
 
-/* Modal Styling */
 .modal {
     display: none;
     position: fixed;
@@ -349,7 +348,7 @@ button:hover {
     </div>
 
     <h1>Mathematics Diagnostic Assessment</h1>
-    <p class="subtitle">Grade Placement Assessment </p>
+    <p class="subtitle">Grade Placement Assessment</p>
 
     <div class="instructions-box">
         <b>📌 Important Instructions:</b>
@@ -464,9 +463,32 @@ let studentAnswersList = [];
 let timerInterval = null;
 let timeRemaining = TIME_LIMIT_SECONDS;
 
-// TAB SWITCH TRACKING
 let tabSwitchCount = 0;
 let isTestActive = false;
+
+// Universal cleaner for any Level tag e.g. [Level 1], [Level 2], [Level 3]
+function removeLevelText(text) {
+    if (typeof text !== 'string') return text;
+    return text.replace(/\[\s*Level\s*\d+\s*\]/gi, "").trim();
+}
+
+// Global MutationObserver to automatically strip out [Level X] from rendered DOM instantly
+const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+        if (mutation.type === 'childList' || mutation.type === 'characterData') {
+            const qDivs = document.querySelectorAll('.question');
+            qDivs.forEach(div => {
+                if (/\[\s*Level\s*\d+\s*\]/i.test(div.innerHTML)) {
+                    div.innerHTML = removeLevelText(div.innerHTML);
+                }
+            });
+        }
+    });
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+});
 
 document.addEventListener("visibilitychange", handleTabSwitch);
 
@@ -486,7 +508,7 @@ function handleTabSwitch() {
     }
 }
 
-/* QUESTION BANK: ALL LEVEL PREFIXES REMOVED FROM QUESTION TEXT */
+/* QUESTION BANK */
 const questions = [
     // --- FOUNDATION SECTION ---
     { skill: "Operations with Integers", question: "What is the value of -7 + 12 - 5?", options: ["0", "-10", "10", "14"], answer: 0 },
@@ -609,6 +631,7 @@ function viewStudentDetails(index) {
         student.details.forEach((item, i) => {
             let statusClass = item.isCorrect ? "status-correct" : "status-incorrect";
             let statusText = item.isCorrect ? "✓ Correct" : "✗ Incorrect";
+            let cleanQuestion = removeLevelText(item.question);
 
             html += `
                 <div class="detail-card">
@@ -616,7 +639,7 @@ function viewStudentDetails(index) {
                         <b>Q${i + 1}: ${item.skill}</b>
                         <span class="${statusClass}">${statusText}</span>
                     </div>
-                    <div style="font-size:14px; color:#444; margin-bottom:8px;">${item.question}</div>
+                    <div style="font-size:14px; color:#444; margin-bottom:8px;">${cleanQuestion}</div>
                     <div style="font-size:13px;"><b>Selected Answer:</b> ${item.selectedAnswer}</div>
                     <div style="font-size:13px;"><b>Correct Answer:</b> ${item.correctAnswer}</div>
                 </div>
@@ -650,7 +673,8 @@ function exportClassCSV() {
         if (r.details && r.details.length > 0) {
             r.details.forEach((d, idx) => {
                 let status = d.isCorrect ? "Correct" : "Incorrect";
-                csv += `"${r.name.replace(/"/g, '""')}",${r.score},${r.total},${r.percentage}%,"${r.placement}",${r.tabSwitches || 0},"${r.date}",${idx + 1},"${d.skill.replace(/"/g, '""')}","${d.question.replace(/"/g, '""')}","${d.selectedAnswer.replace(/"/g, '""')}","${d.correctAnswer.replace(/"/g, '""')}","${status}"\n`;
+                let cleanQ = removeLevelText(d.question);
+                csv += `"${r.name.replace(/"/g, '""')}",${r.score},${r.total},${r.percentage}%,"${r.placement}",${r.tabSwitches || 0},"${r.date}",${idx + 1},"${d.skill.replace(/"/g, '""')}","${cleanQ.replace(/"/g, '""')}","${d.selectedAnswer.replace(/"/g, '""')}","${d.correctAnswer.replace(/"/g, '""')}","${status}"\n`;
             });
         } else {
             csv += `"${r.name.replace(/"/g, '""')}",${r.score},${r.total},${r.percentage}%,"${r.placement}",${r.tabSwitches || 0},"${r.date}",N/A,N/A,N/A,N/A,N/A,N/A\n`;
@@ -708,15 +732,19 @@ function startTest() {
 }
 
 function showNextQuestion() {
-    if (currentQuestionIndex >= questions.length) {
+    let activeQuestions = (typeof branchingQuestions !== 'undefined' && branchingQuestions.length) ? branchingQuestions : questions;
+
+    if (currentQuestionIndex >= activeQuestions.length) {
         finishTest();
         return;
     }
 
-    currentQuestion = questions[currentQuestionIndex];
-    document.getElementById("questionNumber").textContent = `${currentQuestionIndex + 1} of ${questions.length}`;
+    currentQuestion = activeQuestions[currentQuestionIndex];
+    document.getElementById("questionNumber").textContent = `${currentQuestionIndex + 1} of ${activeQuestions.length}`;
 
-    let html = `<div class="question">${currentQuestion.question}</div>`;
+    let cleanQuestionText = removeLevelText(currentQuestion.question);
+
+    let html = `<div class="question">${cleanQuestionText}</div>`;
     
     let opts = currentQuestion.options.map((opt, idx) => ({ text: opt, isCorrect: idx === currentQuestion.answer }));
     opts.sort(() => Math.random() - 0.5);
@@ -740,9 +768,10 @@ function submitAnswer() {
     const chosenOpt = currentQuestion.shuffledOpts[selectedIndex];
     const isCorrect = chosenOpt.isCorrect;
     const correctAnswerText = currentQuestion.options[currentQuestion.answer];
+    let cleanQuestionText = removeLevelText(currentQuestion.question);
 
     studentAnswersList.push({
-        question: currentQuestion.question,
+        question: cleanQuestionText,
         skill: currentQuestion.skill,
         selectedAnswer: chosenOpt.text,
         correctAnswer: correctAnswerText,
@@ -768,7 +797,7 @@ function finishTest() {
     document.getElementById("testScreen").classList.add("hidden");
     document.getElementById("resultScreen").classList.remove("hidden");
 
-    let totalQuestions = questions.length;
+    let totalQuestions = studentAnswersList.length || questions.length;
     let percentage = Math.round((score / totalQuestions) * 100);
     let targetGrade = "";
 
@@ -782,7 +811,6 @@ function finishTest() {
 
     document.getElementById("displayStudentName").textContent = studentName;
 
-    // Save result locally for Teacher Dashboard
     let existing = JSON.parse(localStorage.getItem("mage_diagnostic_results") || "[]");
     existing.push({
         name: studentName,
@@ -826,6 +854,18 @@ function sendToGoogleSheets(percentage, placement, total) {
     });
 }
 </script>
+
+<!-- Clean questions inside branching.js right after it loads -->
 <script src="branching.js"></script>
+<script>
+if (typeof branchingQuestions !== 'undefined' && Array.isArray(branchingQuestions)) {
+    branchingQuestions.forEach(q => {
+        if (q.question) {
+            q.question = removeLevelText(q.question);
+        }
+    });
+}
+</script>
+
 </body>
 </html>
