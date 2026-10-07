@@ -355,7 +355,7 @@ button:hover {
         <ul>
             <li>This assessment evaluates core mathematical skills.</li>
             <li>Time Limit: <b>45 Minutes</b>.</li>
-            <li><b>Tab Switch Rule:</b> You are allowed a maximum of <b>3 tab switches</b> during the test. If you switch tabs or minimize the window a <b>4th time</b>, your assessment will be <b>automatically submitted</b> immediately.</li>
+            <li><b>Strict Window Policy:</b> Switching tabs or leaving the assessment window is <b>strictly prohibited</b>. Exceeding 3 tab switches will result in the <b>immediate and automatic cancellation</b> of your exam.</li>
         </ul>
     </div>
 
@@ -377,7 +377,7 @@ button:hover {
     </div>
 
     <div id="tabWarning" class="warning-banner hidden">
-        ⚠️ Warning: Tab switching detected! Count: <span id="switchCountDisplay">0</span> / 3 (Exceeding 3 will auto-submit your test!)
+        ⚠️ Warning: Switching tabs is strictly prohibited! Recorded Violations: <span id="switchCountDisplay">0</span> / 3
     </div>
 
     <div id="questionArea"></div>
@@ -499,11 +499,11 @@ function handleTabSwitch() {
         document.getElementById("switchCountDisplay").textContent = tabSwitchCount;
 
         if (tabSwitchCount > MAX_TAB_SWITCHES) {
-            alert(`Maximum tab switch limit (${MAX_TAB_SWITCHES}) exceeded! Your assessment is being automatically submitted.`);
-            document.getElementById("autoSubmitReason").textContent = "Note: Assessment was automatically submitted due to exceeding the maximum allowed tab switches (3).";
+            alert(`Violation threshold exceeded! Switching tabs is strictly prohibited. Your assessment has been automatically canceled and submitted.`);
+            document.getElementById("autoSubmitReason").textContent = "Note: Assessment was automatically submitted due to a violation of the tab switch policy.";
             finishTest();
         } else {
-            alert(`Warning: You switched tabs or minimized the window! Tab switch count: ${tabSwitchCount} of ${MAX_TAB_SWITCHES}. Exceeding ${MAX_TAB_SWITCHES} switches will auto-submit your test!`);
+            alert(`WARNING: Switching tabs is strictly prohibited! Violation ${tabSwitchCount} recorded. Exceeding 3 violations will immediately cancel your exam.`);
         }
     }
 }
