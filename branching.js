@@ -44,7 +44,7 @@ function submitAnswer() {
 }
 
 function showNextAdaptiveQuestion() {
-    if (currentQuestionIndex >= 15) { // Stop after 15 adaptive questions or your chosen limit
+    if (currentQuestionIndex >= 20) { // Stop after 15 adaptive questions or your chosen limit
         finishTest();
         return;
     }
