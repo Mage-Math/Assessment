@@ -310,6 +310,24 @@ button:hover {
     font-weight: bold;
     font-size: 14px;
 }
+
+.instructions-box {
+    background: #fffbe3;
+    border: 1px solid #ffe58f;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.instructions-box ul {
+    margin: 5px 0 0 20px;
+    padding: 0;
+}
+
+.instructions-box li {
+    margin-bottom: 5px;
+}
 </style>
 </head>
 
@@ -333,7 +351,14 @@ button:hover {
     <h1>Mathematics Diagnostic Assessment</h1>
     <p class="subtitle">Grade Placement Assessment </p>
 
-    <p>This assessment evaluates core mathematical skills </p>
+    <div class="instructions-box">
+        <b>📌 Important Instructions:</b>
+        <ul>
+            <li>This assessment evaluates core mathematical skills.</li>
+            <li>Time Limit: <b>45 Minutes</b>.</li>
+            <li><b>Tab Switch Rule:</b> You are allowed a maximum of <b>3 tab switches</b> during the test. If you switch tabs or minimize the window a <b>4th time</b>, your assessment will be <b>automatically submitted</b> immediately.</li>
+        </ul>
+    </div>
 
     <label><b>Student Name</b></label>
     <br><br>
@@ -353,7 +378,7 @@ button:hover {
     </div>
 
     <div id="tabWarning" class="warning-banner hidden">
-        ⚠️ Warning: Tab switching detected! Count: <span id="switchCountDisplay">0</span>
+        ⚠️ Warning: Tab switching detected! Count: <span id="switchCountDisplay">0</span> / 3 (Exceeding 3 will auto-submit your test!)
     </div>
 
     <div id="questionArea"></div>
@@ -371,6 +396,7 @@ button:hover {
             <p style="font-size: 18px; color: #444; margin-top: 15px;">
                 Your answers have been successfully recorded. Your teacher will review your responses shortly.
             </p>
+            <p id="autoSubmitReason" style="color: #dc2626; font-weight: bold;"></p>
         </div>
 
         <p id="savingMessage" style="font-weight: bold; color: var(--secondary-color);"></p>
@@ -424,6 +450,7 @@ const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx7MAqukTjRKy
 const TEACHER_PIN = "egam@2026";
 
 const TIME_LIMIT_SECONDS = 45 * 60;
+const MAX_TAB_SWITCHES = 3;
 
 let studentName = "";
 let currentQuestion = null;
@@ -448,40 +475,64 @@ function handleTabSwitch() {
         tabSwitchCount++;
         document.getElementById("tabWarning").classList.remove("hidden");
         document.getElementById("switchCountDisplay").textContent = tabSwitchCount;
-        alert(`Warning: You switched tabs or minimized the window! Tab switch count: ${tabSwitchCount}. This activity is logged.`);
+
+        if (tabSwitchCount > MAX_TAB_SWITCHES) {
+            alert(`Maximum tab switch limit (${MAX_TAB_SWITCHES}) exceeded! Your assessment is being automatically submitted.`);
+            document.getElementById("autoSubmitReason").textContent = "Note: Assessment was automatically submitted due to exceeding the maximum allowed tab switches (3).";
+            finishTest();
+        } else {
+            alert(`Warning: You switched tabs or minimized the window! Tab switch count: ${tabSwitchCount} of ${MAX_TAB_SWITCHES}. Exceeding ${MAX_TAB_SWITCHES} switches will auto-submit your test!`);
+        }
     }
 }
 
-/* QUESTION BANK */
+/* QUESTION BANK: LEVEL 1 (FOUNDATION), LEVEL 2 (STANDARD), LEVEL 3 (ADVANCED) */
 const questions = [
-    { skill: "Solving Multi-Step Linear Equations", question: "Can you solve this equation for x?\n4(x - 3) = 2x + 10", options: ["x = 11", "x = 7", "x = 5", "x = 13"], answer: 0 },
-    { skill: "Solving Equations with Variables on Both Sides", question: "Find the value of y that makes this equation true:\n7y - 5 = 3(y + 9)", options: ["y = 8", "y = 6", "y = 7", "y = 9"], answer: 0 },
-    { skill: "Linear Inequalities", question: "If you solve the inequality -3x + 7 < 22, which answer gives the correct range for x?", options: ["x > -5", "x < -5", "x > 5", "x < 5"], answer: 0 },
-    { skill: "Literal Equations (Rearranging Formulae)", question: "In the interest formula A = P(1 + rt), rearrange the equation to make 'r' the subject.", options: ["r = (A - P) / (Pt)", "r = (A + P) / Pt", "r = A / Pt - 1", "r = (A - 1) / Pt"], answer: 0 },
-    { skill: "Word Problems / Systems of Linear Equations", question: "A bakery sells 2 muffins and 3 cookies for $12. Another customer buys 1 muffin and 1 cookie for $5. How much does 1 muffin (x) and 1 cookie (y) cost?", options: ["Muffin = $3, Cookie = $2", "Muffin = $2, Cookie = $3", "Muffin = $4, Cookie = $1", "Muffin = $5, Cookie = $0"], answer: 0 },
-    { skill: "Quadratic Factorisation", question: "If we factorise the expression x² - 7x + 12 completely, which set of brackets do we get?", options: ["(x - 3)(x - 4)", "(x + 3)(x + 4)", "(x - 2)(x - 6)", "(x + 1)(x - 12)"], answer: 0 },
-    { skill: "Arithmetic Sequences", question: "Look at this number pattern: 5, 9, 13, 17, ...\nIf it keeps growing the same way, what will the 15th term be?", options: ["61", "57", "65", "53"], answer: 0 },
-    { skill: "Non-Linear Sequences", question: "Can you figure out the nth term rule for this sequence?\n3, 8, 15, 24, 35...", options: ["n² + 2n", "n² + 2", "2n² + 1", "3n + 0"], answer: 0 },
-    { skill: "Functions & Evaluation", question: "Given the function f(x) = 3x² - 2x + 5, what is the output value when x = -2?", options: ["21", "13", "17", "9"], answer: 0 },
-    { skill: "Angle Properties of Polygons", question: "What is the total sum of all the interior angles inside any 6-sided polygon (hexagon)?", options: ["720°", "540°", "360°", "900°"], answer: 0 },
-    { skill: "Word Problems / Pythagoras Theorem", question: "A ladder reaches up a vertical wall. The base of the ladder is 9 cm from the wall, and it reaches 12 cm up the wall. How long is the ladder?", options: ["15 cm", "18 cm", "21 cm", "13 cm"], answer: 0 },
-    { skill: "Right-Angled Trigonometry", question: "In a right-angled triangle, the side opposite angle θ is 8 cm long and the hypotenuse is 10 cm long. What is sin(θ)?", options: ["0.8", "0.6", "1.25", "0.75"], answer: 0 },
-    { skill: "Volume of 3D Shapes", question: "A cylindrical container has a radius of 3 cm and a height of 10 cm. What is its volume in terms of π?", options: ["90π cm³", "60π cm³", "30π cm³", "180π cm³"], answer: 0 },
-    { skill: "Word Problems / Percentage Increase", question: "A store increases the price of a $150 jacket by 20%. What is the new price tag?", options: ["$180", "$170", "$190", "$160"], answer: 0 },
-    { skill: "Word Problems / Compound Interest", question: "You deposit $1,000 into a savings account that pays 5% compound interest each year. How much money will be in the account after 2 years?", options: ["$1,102.50", "$1,100.00", "$1,050.00", "$1,125.00"], answer: 0 },
-    { skill: "Word Problems / Inverse Proportion", question: "It takes 6 painters 8 hours to paint a fence. If only 4 painters show up and work at the exact same pace, how long will it take them?", options: ["12 hours", "10 hours", "14 hours", "9 hours"], answer: 0 },
-    { skill: "Operations with Integers", question: "Let's simplify this step-by-step: what is -7 + 12 - 5?", options: ["0", "-10", "10", "14"], answer: 0 },
-    { skill: "Standard Form / Scientific Notation", question: "How would you write 0.00072 in standard scientific notation?", options: ["7.2 × 10⁻⁴", "7.2 × 10⁻³", "72 × 10⁻⁵", "0.72 × 10⁻³"], answer: 0 },
-    { skill: "Index Laws", question: "Using the laws of indices, simplify: 2³ × 2⁴", options: ["2⁷", "2¹²", "4⁷", "4¹²"], answer: 0 },
-    { skill: "Highest Common Factor", question: "What is the Highest Common Factor (HCF) of 84 and 126?", options: ["42", "14", "21", "84"], answer: 0 },
-    { skill: "Word Problems / Ratios & Sharing", question: "Two friends split $360 in the ratio 4:5. How much money does the person with the larger share get?", options: ["$200", "$160", "$180", "$120"], answer: 0 },
-    { skill: "Word Problems / Reverse Percentages", question: "After a 15% discount, a coat is selling for $1,020. What was the coat's original price before the sale?", options: ["$1,200", "$1,150", "$1,250", "$1,300"], answer: 0 },
-    { skill: "Coordinate Geometry / Slope (Gradient)", question: "On a grid, a line passes through points (1, 3) and (5, 11). What is the gradient (slope) of this line?", options: ["2", "4", "0.5", "3"], answer: 0 },
-    { skill: "Coordinate Geometry / Midpoint Formula", question: "What are the coordinates of the midpoint of a line segment connecting Point A(2, 4) and Point B(8, 10)?", options: ["(5, 7)", "(3, 3)", "(10, 14)", "(6, 6)"], answer: 0 },
-    { skill: "Single-Bracket Factorisation", question: "Factorise this algebraic expression completely: 12x + 18", options: ["6(2x + 3)", "3(4x + 6)", "2(6x + 9)", "12(x + 18)"], answer: 0 },
-    { skill: "Coordinate Geometry / Grid Translations", question: "If point (-2, 5) on a graph is shifted 4 units to the right and 3 units down, where does it land?", options: ["(2, 2)", "(-6, 8)", "(2, 8)", "(-6, 2)"], answer: 0 },
-    { skill: "Word Problems / Averages & Mean", question: "A student took 5 quizzes. Their mean score was 12. Four of the quiz scores were 8, 11, 13, and 15. What was the fifth quiz score?", options: ["14", "12", "13", "15"], answer: 0 },
-    { skill: "Basic Probability", question: "A bag contains 3 blue marbles and 7 red marbles. If you pick one marble without looking, what is the probability it is blue?", options: ["3/10", "3/7", "7/10", "1/3"], answer: 0 }
+    // --- LEVEL 1: FOUNDATION (Integers, Decimals, Fractions, Ratios, Basic Algebra, Perimeter/Area) ---
+    { skill: "Operations with Integers", question: "Level 1: What is the value of -7 + 12 - 5?", options: ["0", "-10", "10", "14"], answer: 0 },
+    { skill: "Operations with Integers", question: "Level 1: Calculate (-4) × (-6) ÷ 2.", options: ["12", "-12", "24", "-24"], answer: 0 },
+    { skill: "Operations with Decimals", question: "Level 1: What is 14.35 + 8.72 - 3.10?", options: ["19.97", "19.87", "20.07", "18.97"], answer: 0 },
+    { skill: "Operations with Decimals", question: "Level 1: Evaluate 0.6 × 0.04.", options: ["0.024", "0.24", "0.0024", "2.4"], answer: 0 },
+    { skill: "Operations with Fractions", question: "Level 1: What is 3/4 + 2/5 in simplest form?", options: ["23/20", "5/9", "1/2", "11/20"], answer: 0 },
+    { skill: "Operations with Fractions", question: "Level 1: Calculate 5/8 ÷ 3/4.", options: ["5/6", "15/32", "6/5", "8/7"], answer: 0 },
+    { skill: "Basic Ratios", question: "Level 1: Simplify the ratio 18 : 24 to its lowest terms.", options: ["3 : 4", "2 : 3", "4 : 5", "3 : 5"], answer: 0 },
+    { skill: "Basic Proportions", question: "Level 1: If 4 notebooks cost $12, how much will 9 notebooks cost?", options: ["$27", "$24", "$36", "$30"], answer: 0 },
+    { skill: "Basic Percentages", question: "Level 1: What is 15% of $80?", options: ["$12", "$10", "$15", "$18"], answer: 0 },
+    { skill: "Single-Bracket Factorisation", question: "Level 1: Factorise this algebraic expression completely: 12x + 18", options: ["6(2x + 3)", "3(4x + 6)", "2(6x + 9)", "12(x + 18)"], answer: 0 },
+    { skill: "Basic Linear Equations", question: "Level 1: Solve for x: 3x - 7 = 14", options: ["x = 7", "x = 6", "x = 8", "x = 5"], answer: 0 },
+    { skill: "Perimeter and Area", question: "Level 1: What is the area of a rectangle with length 12 cm and width 5 cm?", options: ["60 cm²", "34 cm²", "17 cm²", "120 cm²"], answer: 0 },
+    { skill: "Basic Probability", question: "Level 1: A bag contains 3 blue marbles and 7 red marbles. What is the probability of drawing a blue marble?", options: ["3/10", "3/7", "7/10", "1/3"], answer: 0 },
+
+    // --- LEVEL 2: STANDARD (Algebraic Concepts, Geometry, Statistics, Sequences, Rates) ---
+    { skill: "Solving Multi-Step Linear Equations", question: "Level 2: Can you solve this equation for x?\n4(x - 3) = 2x + 10", options: ["x = 11", "x = 7", "x = 5", "x = 13"], answer: 0 },
+    { skill: "Solving Equations with Variables on Both Sides", question: "Level 2: Find the value of y that makes this equation true:\n7y - 5 = 3(y + 9)", options: ["y = 8", "y = 6", "y = 7", "y = 9"], answer: 0 },
+    { skill: "Linear Inequalities", question: "Level 2: If you solve the inequality -3x + 7 < 22, which answer gives the correct range for x?", options: ["x > -5", "x < -5", "x > 5", "x < 5"], answer: 0 },
+    { skill: "Arithmetic Sequences", question: "Level 2: Look at this number pattern: 5, 9, 13, 17, ...\nWhat will the 15th term be?", options: ["61", "57", "65", "53"], answer: 0 },
+    { skill: "Angle Properties of Polygons", question: "Level 2: What is the total sum of all the interior angles inside any 6-sided polygon (hexagon)?", options: ["720°", "540°", "360°", "900°"], answer: 0 },
+    { skill: "Pythagoras Theorem", question: "Level 2: A base of a right triangle is 9 cm and the vertical height is 12 cm. How long is the hypotenuse?", options: ["15 cm", "18 cm", "21 cm", "13 cm"], answer: 0 },
+    { skill: "Right-Angled Trigonometry", question: "Level 2: In a right-angled triangle, the side opposite angle θ is 8 cm long and the hypotenuse is 10 cm long. What is sin(θ)?", options: ["0.8", "0.6", "1.25", "0.75"], answer: 0 },
+    { skill: "Volume of 3D Shapes", question: "Level 2: A cylindrical container has a radius of 3 cm and a height of 10 cm. What is its volume in terms of π?", options: ["90π cm³", "60π cm³", "30π cm³", "180π cm³"], answer: 0 },
+    { skill: "Percentage Increase", question: "Level 2: A store increases the price of a $150 jacket by 20%. What is the new price tag?", options: ["$180", "$170", "$190", "$160"], answer: 0 },
+    { skill: "Inverse Proportion", question: "Level 2: It takes 6 painters 8 hours to paint a fence. If only 4 painters work at the same pace, how long will it take them?", options: ["12 hours", "10 hours", "14 hours", "9 hours"], answer: 0 },
+    { skill: "Index Laws", question: "Level 2: Using the laws of indices, simplify: 2³ × 2⁴", options: ["2⁷", "2¹²", "4⁷", "4¹²"], answer: 0 },
+    { skill: "Highest Common Factor", question: "Level 2: What is the Highest Common Factor (HCF) of 84 and 126?", options: ["42", "14", "21", "84"], answer: 0 },
+    { skill: "Ratios & Sharing", question: "Level 2: Two friends split $360 in the ratio 4:5. How much money does the person with the larger share get?", options: ["$200", "$160", "$180", "$120"], answer: 0 },
+    { skill: "Slope (Gradient)", question: "Level 2: A line passes through points (1, 3) and (5, 11). What is the gradient (slope) of this line?", options: ["2", "4", "0.5", "3"], answer: 0 },
+    { skill: "Midpoint Formula", question: "Level 2: What are the coordinates of the midpoint connecting Point A(2, 4) and Point B(8, 10)?", options: ["(5, 7)", "(3, 3)", "(10, 14)", "(6, 6)"], answer: 0 },
+    { skill: "Grid Translations", question: "Level 2: If point (-2, 5) on a graph is shifted 4 units right and 3 units down, where does it land?", options: ["(2, 2)", "(-6, 8)", "(2, 8)", "(-6, 2)"], answer: 0 },
+    { skill: "Averages & Mean", question: "Level 2: Four quiz scores were 8, 11, 13, and 15. If the mean score of 5 quizzes was 12, what was the fifth quiz score?", options: ["14", "12", "13", "15"], answer: 0 },
+
+    // --- LEVEL 3: ADVANCED (Quadratic Algebra, Formula Transformation, Sequences, Advanced Proportion) ---
+    { skill: "Literal Equations (Rearranging Formulae)", question: "Level 3: In the interest formula A = P(1 + rt), rearrange the equation to make 'r' the subject.", options: ["r = (A - P) / (Pt)", "r = (A + P) / Pt", "r = A / Pt - 1", "r = (A - 1) / Pt"], answer: 0 },
+    { skill: "Systems of Linear Equations", question: "Level 3: A bakery sells 2 muffins and 3 cookies for $12. Another customer buys 1 muffin and 1 cookie for $5. How much does 1 muffin (x) and 1 cookie (y) cost?", options: ["Muffin = $3, Cookie = $2", "Muffin = $2, Cookie = $3", "Muffin = $4, Cookie = $1", "Muffin = $5, Cookie = $0"], answer: 0 },
+    { skill: "Quadratic Factorisation", question: "Level 3: Factorise the expression x² - 7x + 12 completely into two brackets.", options: ["(x - 3)(x - 4)", "(x + 3)(x + 4)", "(x - 2)(x - 6)", "(x + 1)(x - 12)"], answer: 0 },
+    { skill: "Quadratic Equations", question: "Level 3: What are the solutions to the quadratic equation x² - 5x - 14 = 0?", options: ["x = 7, x = -2", "x = -7, x = 2", "x = 14, x = -1", "x = 5, x = 2"], answer: 0 },
+    { skill: "Non-Linear Sequences", question: "Level 3: Can you figure out the nth term rule for this sequence?\n3, 8, 15, 24, 35...", options: ["n² + 2n", "n² + 2", "2n² + 1", "3n + 0"], answer: 0 },
+    { skill: "Functions & Evaluation", question: "Level 3: Given the function f(x) = 3x² - 2x + 5, what is the output value when x = -2?", options: ["21", "13", "17", "9"], answer: 0 },
+    { skill: "Compound Interest", question: "Level 3: You deposit $1,000 into an account paying 5% compound interest annually. How much is in the account after 2 years?", options: ["$1,102.50", "$1,100.00", "$1,050.00", "$1,125.00"], answer: 0 },
+    { skill: "Standard Form / Scientific Notation", question: "Level 3: How would you write 0.00072 in standard scientific notation?", options: ["7.2 × 10⁻⁴", "7.2 × 10⁻³", "72 × 10⁻⁵", "0.72 × 10⁻³"], answer: 0 },
+    { skill: "Reverse Percentages", question: "Level 3: After a 15% discount, a coat sells for $1,020. What was its original price before the sale?", options: ["$1,200", "$1,150", "$1,250", "$1,300"], answer: 0 },
+    { skill: "Advanced Exponents", question: "Level 3: Simplify (3x³y²)³.", options: ["27x⁹y⁶", "9x⁶y⁵", "27x⁶y⁵", "9x⁹y⁶"], answer: 0 }
 ];
 
 /* TEACHER PORTAL LOGIC */
@@ -693,6 +744,8 @@ function submitAnswer() {
 }
 
 function finishTest() {
+    if (!isTestActive && document.getElementById("testScreen").classList.contains("hidden")) return;
+    
     isTestActive = false;
     clearInterval(timerInterval);
     document.getElementById("testScreen").classList.add("hidden");
