@@ -154,7 +154,6 @@ function showNextQuestion() {
         }
     });
 
-    // Fallback: Pick nearest available question if level bank runs out
     if (candidateIndices.length === 0) {
         questions.forEach((q, idx) => {
             if (!usedQuestionIndices.has(idx)) {
